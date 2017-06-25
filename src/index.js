@@ -1,7 +1,9 @@
 import Blueprint from 'factorio-blueprint';
 import demos from './demos/demos';
 
-const pre = document.createElement('pre');
+import css from './style.css';
+
+const textarea = document.createElement('textarea');
 
 Object.entries(demos).forEach(([name, constructor]) => {
     const button = document.createElement('button');
@@ -10,8 +12,10 @@ Object.entries(demos).forEach(([name, constructor]) => {
 
     button.addEventListener('click', () => {
         const bp = constructor();
-        pre.textContent = bp.encode();
+        textarea.textContent = bp.encode();
     });
 });
 
-document.body.appendChild(pre);
+textarea.addEventListener('focus', () => textarea.select());
+
+document.body.appendChild(textarea);
