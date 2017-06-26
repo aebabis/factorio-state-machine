@@ -9,9 +9,6 @@ const getNearestPole = (bp, entity) => {
 }
 
 const createCombinator = (bp, type, coords, hasVarsIn = false, hasVarsOut = false) => {
-
-coords.x++;
-
     const combinator = bp.createEntity(`${type}_combinator`, coords, 2);
     const pole = getNearestPole(bp, combinator);
     if(hasVarsIn) {
