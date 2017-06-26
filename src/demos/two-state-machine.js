@@ -1,5 +1,11 @@
 import Blueprint from 'factorio-blueprint';
 
+/**
+ * Gets the nearest pole to the given entity.
+ * All poles are at coordinates divisible by 7
+ * @param {*} bp - The blueprint containing the target entity
+ * @param {*} entity - The entity
+ */
 const getNearestPole = (bp, entity) => {
     const {x, y} = entity.position;
     return bp.findEntity({
@@ -8,6 +14,14 @@ const getNearestPole = (bp, entity) => {
     });
 }
 
+/**
+ * Helper for creating combinators
+ * @param {*} bp - The blueprint
+ * @param {*} type - Combinator type: 'constant', 'arithmetic', or 'decider'
+ * @param {*} coords - Coordinate object of the form `{x, y}`
+ * @param {boolean} hasVarsIn - Flag indicating whether combinator reads state variables
+ * @param {boolean} hasVarsOut - Flag indicating whether combinator updates state variables
+ */
 const createCombinator = (bp, type, coords, hasVarsIn = false, hasVarsOut = false) => {
     const combinator = bp.createEntity(`${type}_combinator`, coords, 2);
     const pole = getNearestPole(bp, combinator);
@@ -20,6 +34,12 @@ const createCombinator = (bp, type, coords, hasVarsIn = false, hasVarsOut = fals
     return combinator;
 }
 
+/**
+ * Adds a combinator representing one of the (global) state variables in the symbol table
+ * @param {*} bp - The blueprint
+ * @param {*} varName - The name of the variables (e.g. 'X')
+ * @param {*} coords - Coordinate object of the form `{x, y}`
+ */
 const createSymbolCombinator = (bp, varName, coords) => {
     const combinator = createCombinator(bp, 'arithmetic', coords, true, true);
     combinator.setCondition({
@@ -30,6 +50,12 @@ const createSymbolCombinator = (bp, varName, coords) => {
     });
 }
 
+/**
+ * Connects all combinators for a single "instruction" with green wire.
+ * This implementation is naive and will need to be rewriten if we do
+ * compound instructions (e.g. `x = 3 * (x + 7) * (y + 2)`)
+ * @param {Array} steps 
+ */
 const createLocalConnections = (steps) => {
     const stepGroups = steps.map(item => Array.isArray(item) ? item : [item]);
     stepGroups.slice(0, -1).forEach((item, index) => {
@@ -42,6 +68,10 @@ const createLocalConnections = (steps) => {
     });
 }
 
+/**
+ * Creates a simple state machine that alternates between incrementing
+ * X three times and incrementing Y one time.
+ */
 export default () => {
     const bp = new Blueprint();
 
