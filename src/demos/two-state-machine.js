@@ -1,5 +1,21 @@
 import Blueprint from 'factorio-blueprint';
 
+const getPoleAt = (bp, coords, canCreate = true) => {
+    const {x, y} = coords;
+    let pole = bp.findEntity(coords);
+    if(!pole && canCreate) {
+        pole = bp.createEntity('medium_electric_pole', coords);
+        const neighbors = [
+            getPoleAt(bp, {x: x - 7, y: y}, false),
+            getPoleAt(bp, {x: x + 7, y: y}, false),
+            getPoleAt(bp, {x: x, y: y - 7}, false),
+            getPoleAt(bp, {x: x, y: y + 7}, false)
+        ].filter(Boolean);
+        neighbors.forEach(neighbor => pole.connect(neighbor, 0, 0, 'red'));
+    }
+    return pole || null;
+}
+
 /**
  * Gets the nearest pole to the given entity.
  * All poles are at coordinates divisible by 7
@@ -8,7 +24,7 @@ import Blueprint from 'factorio-blueprint';
  */
 const getNearestPole = (bp, entity) => {
     const {x, y} = entity.position;
-    return bp.findEntity({
+    return getPoleAt(bp, {
         x: Math.round(x / 7) * 7,
         y: Math.round(y / 7) * 7
     });
@@ -74,35 +90,6 @@ const createLocalConnections = (steps) => {
  */
 export default () => {
     const bp = new Blueprint();
-
-    const poleBounds = {
-        y1: -1,
-        y2: 1,
-        x2: 1
-    };
-    const poles = {};
-    for(let y = poleBounds.y1; y <= poleBounds.y2; y++) {
-        const my = y * 7;
-        const row = poles[my] = {};
-        for(let x = 0; x <= poleBounds.x2; x++) {
-            const mx = x * 7;
-            row[mx] = bp.createEntity('medium_electric_pole', { x: mx, y: my });
-        }
-    }
-
-    for(let y = poleBounds.y1; y <= poleBounds.y2 - 1; y++) {
-        for(let x = 0; x <= poleBounds.x2; x++) {
-            bp.findEntity({ x: x * 7, y: y * 7 })
-                .connect(bp.findEntity({x : x * 7, y: (y + 1) * 7}), 0, 0, 'red');
-        }
-    }
-
-    for(let y = poleBounds.y1; y <= poleBounds.y2; y++) {
-        for(let x = 0; x <= poleBounds.x2 - 1; x++) {
-            bp.findEntity({ x: x * 7, y: y * 7 })
-                .connect(bp.findEntity({x : (x + 1) * 7, y: y * 7}), 0, 0, 'red');
-        }
-    }
 
     createCombinator(bp, 'constant', {x: -3, y: -4}, true);
     createSymbolCombinator(bp, 'signal_S', {x: -3, y: -3}, true, true);
