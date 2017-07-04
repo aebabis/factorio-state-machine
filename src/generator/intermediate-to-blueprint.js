@@ -14,7 +14,7 @@ const getPoleAt = (bp, coords, canCreate = true) => {
         neighbors.forEach(neighbor => pole.connect(neighbor, 0, 0, 'red'));
     }
     return pole || null;
-}
+};
 
 /**
  * Gets the nearest pole to the given entity.
@@ -28,7 +28,7 @@ const getNearestPole = (bp, entity) => {
         x: Math.round(x / 7) * 7,
         y: Math.round(y / 7) * 7
     });
-}
+};
 
 /**
  * Helper for creating combinators
@@ -48,7 +48,7 @@ const createCombinator = (bp, type, coords, hasSignalsIn = false, hasSignalsOut 
         combinator.connect(pole, 2, 0, 'red');
     }
     return combinator;
-}
+};
 
 /**
  * Adds a combinator representing one of the (global) state variables in the symbol table
@@ -64,7 +64,7 @@ const createSymbolCombinator = (bp, varName, coords) => {
         operator: '+',
         out: varName
     });
-}
+};
 
 /**
  * Connects all combinators for a single "instruction" with green wire.
@@ -82,7 +82,7 @@ const createLocalConnections = (steps) => {
             });
         });
     });
-}
+};
 
 /**
  * Creates a list of global wire signal names used as state machine
@@ -134,8 +134,8 @@ const createSymbolLookup = (stateMachine) => {
                 throw new Error(`Illegal internal variable name: ${varName}`);
             }
         }
-    }
-}
+    };
+};
 
 /**
  * Converts an intermediate expanded form state machine
@@ -157,7 +157,7 @@ export default (stateMachine) => {
 
     // Iterate states
     let y = 1;
-    stateMachine.forEach(({state, statements}) => {
+    stateMachine.forEach(({statements}) => {
         statements.forEach(({start, operations}) => {
             const height = operations.map(group => group.length).reduce((a, b) => Math.max(a, b), 1);
             createLocalConnections(
@@ -190,7 +190,7 @@ export default (stateMachine) => {
                             'decider' : 'arithmetic';
                         const leftSymbol = getSymbol(left);
                         const rightSymbol = getSymbol(right);
-                        const outSymbol = getSymbol(out)
+                        const outSymbol = getSymbol(out);
                         return createCombinator(
                             bp,
                             type,
@@ -215,4 +215,4 @@ export default (stateMachine) => {
     });
 
     return bp;
-}
+};

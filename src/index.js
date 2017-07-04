@@ -1,7 +1,6 @@
-import Blueprint from 'factorio-blueprint';
 import demos from './demos/demos';
 
-import css from './style.css';
+import css from './style.css'; // eslint-disable-line no-unused-vars
 
 const textarea = document.createElement('textarea');
 

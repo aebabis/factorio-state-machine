@@ -80,8 +80,8 @@ describe('state-machine-to-intermediate', () => {
                     branch: 'GUARD',
                     goto: 10
                 }]]
-            }
-        ]}, {
+            }]
+        }, {
             state: 20,
             statements: [{
                 start: 20,

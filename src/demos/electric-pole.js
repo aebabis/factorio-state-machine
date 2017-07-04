@@ -6,4 +6,4 @@ export default () => {
     bp.createEntity('medium_electric_pole', { x: 0, y: 0 });
 
     return bp;
-}
+};
