@@ -11,7 +11,7 @@ const getSymbolFor = varName => {
     } else {
         return varName;
     }
-}
+};
 
 /**
  * Gets the intermediate form of a statement by converting it
@@ -90,7 +90,7 @@ const getIntermediateFormOf = ({left, right, operator, out}, isRight) => {
         }]);
         return mergedArray;
     }
-}
+};
 
 /**
  * Converts the basic form of the parsed state machine
@@ -156,10 +156,10 @@ export default (stateMachine) => {
                     }]]
                 };
             }
-        })
+        });
         return {
             state,
             statements: intermediateStatements.concat(intermediateBranches)
         };
     });
-}
+};
