@@ -6,7 +6,7 @@
   "scripts": {
     "install": "webpack",
     "dev": "webpack-dev-server",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "",
   "license": "MIT",
@@ -21,6 +21,8 @@
     "webpack": "^2.6.1"
   },
   "devDependencies": {
+    "babel-jest": "^20.0.3",
+    "jest": "^20.0.4",
     "webpack-dev-server": "^2.4.5"
   }
 }
