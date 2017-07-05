@@ -17,9 +17,46 @@ const getSymbolFor = varName => {
  * Gets the intermediate form of a statement by converting it
  * into multiple instructions and guarding outputs
  * @param {*} node - A statement or expression 
- * @param {boolean} [isRight] - true if the expression is the right operand of an expression
+ * @param {boolean} [isSecondarySignal] - true if the expression's output signal should be
+ * the secondary signal (B). This is usually the case for the right operand of an expression.
  */
-const getIntermediateFormOf = ({left, right, operator, out}, isRight) => {
+const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) => {
+    if(typeof left === 'number') {
+        // Combinators can only have a constant as the right operand.
+        // If there's a constant on the left but not the right, we
+        // can solve this by swapping, whereas if both values, are constant
+        // the resulting intermediate form can be simplified
+        if(typeof right !== 'number') {
+            return getIntermediateFormOf({
+                left: right,
+                right: left,
+                operator,
+                out
+            }, isSecondarySignal);
+        } else {
+            return [[{
+                left: getSymbolFor(out),
+                right: -1,
+                operator: '*',
+                out: getSymbolFor('INT_A')
+            }, {
+                // We use a ZERO signal to simplify constant generation
+                // by not needing a special case for constant combinators
+                left: getSymbolFor('ZERO'),
+                right: left + right,
+                operator: '+',
+                out: getSymbolFor('INT_A')
+            }, {
+                guard: true
+            }], [{
+                left: getSymbolFor('INT_A'),
+                right: 'GUARD',
+                operator: '*',
+                out: getSymbolFor(out)
+            }]];
+        }
+        // TODO: Test cases: `X = Y + 100` and `X = 100 + Y`
+    }
     // TODO: Explicitly define green connections here in order to
     // prevent variable collisions
     let leftVar, rightVar;
@@ -78,6 +115,30 @@ const getIntermediateFormOf = ({left, right, operator, out}, isRight) => {
             // 2) On the same cycle, subtract 'out' signal from same value
             // 3) Multiply value by guard and then output into signal. In the
             // majority of cases, this final value will be negative
+            mergedArray.push([{
+                left: getSymbolFor(leftVar),
+                right: getSymbolFor(rightVar),
+                operator,
+                out: getSymbolFor('INT_A')
+            }, {
+                // Subtract old value of 'out' from result
+                // making use of implicit addition
+                left: getSymbolFor(out),
+                right: -1,
+                operator: '*',
+                out: getSymbolFor('INT_A')
+            }, {
+                // Guard on same cycle
+                guard: true
+            }]);
+            // Multiply added signal
+            mergedArray.push([{
+                left: 'INT_A',
+                right: 'GUARD',
+                operator: '*',
+                out: getSymbolFor(out)
+            }]);
+            return mergedArray;
         }
     } else {
         mergedArray.push([{
@@ -86,7 +147,7 @@ const getIntermediateFormOf = ({left, right, operator, out}, isRight) => {
             operator,
             // TODO: Import conditional types
             countFromInput: ['=', '<', '>', '<=', '>=', '!='].includes(operator) ? false : undefined,
-            out: isRight ? 'INT_B' : 'INT_A'
+            out: isSecondarySignal ? 'INT_B' : 'INT_A'
         }]);
         return mergedArray;
     }
