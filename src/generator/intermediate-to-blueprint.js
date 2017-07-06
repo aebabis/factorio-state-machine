@@ -126,6 +126,8 @@ const createSymbolLookup = (stateMachine) => {
                 return availableSymbols[index];
             } else if(varName.match(/^GUARD$/)) {
                 return availableSymbols.slice(-1)[0];
+            } else if(varName.match(/^ZERO$/)) {
+                return availableSymbols.slice(-2)[0];
             } else if(varName.match(/^STATE$/)) {
                 return stateSignal;
             } else if(varName.match(/^signal_.*/)) {

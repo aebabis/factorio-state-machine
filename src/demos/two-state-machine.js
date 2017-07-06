@@ -1,5 +1,3 @@
-import Blueprint from 'factorio-blueprint';
-
 import stateMachineToIntermediate from '../generator/state-machine-to-intermediate';
 import intermediateToBlueprint from '../generator/intermediate-to-blueprint';
 

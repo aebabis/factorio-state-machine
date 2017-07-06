@@ -1,7 +1,7 @@
-import electricPole from './electric-pole';
+import repeatingToggle from './repeating-toggle';
 import twoStateMachine from './two-state-machine';
 
 export default {
-    electricPole,
+    repeatingToggle,
     twoStateMachine,
 };
