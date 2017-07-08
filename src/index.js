@@ -9,6 +9,8 @@ const editor = document.querySelector('#editor');
 
 setupEditor(editor);
 
+const updateSelect = () => select.setAttribute('selection', select.value);
+
 Object.keys(demos).forEach(name => {
     const option = document.createElement('option');
     option.textContent = name;
@@ -18,7 +20,9 @@ Object.keys(demos).forEach(name => {
         const key = event.target.value;
         const bp = demos[key]();
         textarea.textContent = bp.encode();
+        updateSelect();
     });
 });
+updateSelect();
 
 textarea.addEventListener('focus', () => textarea.select());

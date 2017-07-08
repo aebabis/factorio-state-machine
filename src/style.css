@@ -28,23 +28,36 @@ header, footer {
     margin-left: 0;
 }
 
+.right {
+    display: flex;
+    flex-direction: column;
+}
+
 select {
     background-color: rgb(32, 32, 32);
     color: rgb(140, 140, 140);
     border: 0;
 }
 
+option {
+    font-style: normal;
+}
+
+select[selection="-1"],
 option:disabled {
     font-style: italic;
 }
 
 textarea {
     display: block;
+    flex: 1;
     width: 100%;
     margin-top: 10px;
+    overflow: auto;
     min-height: 200px;
     background-color: rgb(39, 40, 34);
     color: rgb(140, 140, 140);
     border: 0;
     outline: 0;
+    resize: none;
 }
