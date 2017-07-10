@@ -3,11 +3,22 @@ import demos from './demos/demos';
 import css from './style.css'; // eslint-disable-line no-unused-vars
 import setupEditor from './editor/main';
 
+import transpiler from './generator/transpiler';
+
 const textarea = document.querySelector('textarea.output');
 const select = document.querySelector('select');
-const editor = document.querySelector('#editor');
+const editorContainer = document.querySelector('#editor');
 
-setupEditor(editor);
+const editor = setupEditor(editorContainer);
+
+let debounce;
+editor.on('change', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+        const code = editor.getValue();
+        textarea.textContent = transpiler(code).encode();
+    }, 500);
+});
 
 const updateSelect = () => select.setAttribute('selection', select.value);
 
