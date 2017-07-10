@@ -12,7 +12,10 @@ module.exports = {
         filename: 'bundle.js'
     },
     plugins: [
-        new HtmlWebpackPlugin({ title: 'Factorio State Machine' }),
+        new HtmlWebpackPlugin({
+            title: 'Factorio State Machine',
+            template: path.join(__dirname, 'src', 'index.html')
+        }),
         new webpack.HotModuleReplacementPlugin(),
         new webpack.NoEmitOnErrorsPlugin(),
     ],

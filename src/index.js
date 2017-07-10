@@ -1,20 +1,28 @@
 import demos from './demos/demos';
 
 import css from './style.css'; // eslint-disable-line no-unused-vars
+import setupEditor from './editor/main';
 
-const textarea = document.createElement('textarea');
+const textarea = document.querySelector('textarea.output');
+const select = document.querySelector('select');
+const editor = document.querySelector('#editor');
 
-Object.entries(demos).forEach(([name, constructor]) => {
-    const button = document.createElement('button');
-    button.textContent = name;
-    document.body.appendChild(button);
+setupEditor(editor);
 
-    button.addEventListener('click', () => {
-        const bp = constructor();
+const updateSelect = () => select.setAttribute('selection', select.value);
+
+Object.keys(demos).forEach(name => {
+    const option = document.createElement('option');
+    option.textContent = name;
+    select.appendChild(option);
+
+    select.addEventListener('change', event => {
+        const key = event.target.value;
+        const bp = demos[key]();
         textarea.textContent = bp.encode();
+        updateSelect();
     });
 });
+updateSelect();
 
 textarea.addEventListener('focus', () => textarea.select());
-
-document.body.appendChild(textarea);
