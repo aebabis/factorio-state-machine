@@ -1,4 +1,3 @@
-const START = 'START';
 const STATE_LABEL = 'STATE_LABEL';
 const STATEMENTS = 'STATEMENTS';
 const TRANSITIONS = 'TRANSITIONS';
@@ -84,13 +83,27 @@ export default (code) => {
 
         switch(parserState) {
         case STATEMENTS: {
-            const tokens = line.match(/^\s+(\w+)\s*=(.*)$/);
+            const tokens = line.match(/^\s+(\w+)\s*=[^=](.*)$/);
             if(tokens) {
                 const [, out, expression] = tokens;
-                const expressionTree = convertJsepExpressionTree(jsep(expression));
-                currentMachineState.statements.push(Object.assign({
-                    out
-                }, expressionTree));
+                try {
+                    const expressionTree = convertJsepExpressionTree(jsep(expression));
+                    if(typeof expressionTree === 'number') {
+                        // Set immediate
+                        currentMachineState.statements.push({
+                            left: expressionTree,
+                            right: 0,
+                            operator: '+',
+                            out
+                        });
+                    } else {
+                        currentMachineState.statements.push(Object.assign({
+                            out
+                        }, expressionTree));
+                    }
+                } catch(e) {
+                    throw new Error(`Error on line ${lineNumber}: ${e.message}`);
+                }
                 return;
             }
             // If no statement, fall through to transitions
@@ -104,11 +117,15 @@ export default (code) => {
                         goto: +goto
                     });
                 } else {
-                    const condition = convertJsepExpressionTree(jsep(expression));
-                    currentMachineState.transitions.push({
-                        condition,
-                        goto: +goto
-                    });
+                    try {
+                        const condition = convertJsepExpressionTree(jsep(expression));
+                        currentMachineState.transitions.push({
+                            condition,
+                            goto: +goto
+                        });
+                    } catch(e) {
+                        throw new Error(`Error on line ${lineNumber}: ${e.message}`);
+                    }
                 }
                 return;
             }
