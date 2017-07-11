@@ -170,5 +170,9 @@ export default (code) => {
             });
         }
     });
+
+    // Clean up line numbers
+    stateMachine.forEach(state => delete state.lineNumber);
+
     return stateMachine;
 };
