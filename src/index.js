@@ -18,6 +18,7 @@ const compileText = () => {
         textarea.textContent = transpiler(code).encode();
         compilerErrorContainer.innerHTML = '&nbsp';
     } catch(e) {
+        console.error(e);
         compilerErrorContainer.textContent = e.message;
     }
 };
