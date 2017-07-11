@@ -110,16 +110,21 @@ export default (code) => {
         }
         case TRANSITIONS: { // eslint-disable-line no-fallthrough
             const tokens = line.split('=>');
+            const {transitions} = currentMachineState;
             if(tokens.length > 1) {
+                const prevTransition = transitions.slice(-1)[0];
+                if(prevTransition && typeof prevTransition.condition === 'undefined') {
+                    throw new Error(`Unreachable transition on line ${lineNumber}`);
+                }
                 const [expression, goto] = tokens;
                 if(expression.match(/^\s+$/)) {
-                    currentMachineState.transitions.push({
+                    transitions.push({
                         goto: +goto
                     });
                 } else {
                     try {
                         const condition = convertJsepExpressionTree(jsep(expression));
-                        currentMachineState.transitions.push({
+                        transitions.push({
                             condition,
                             goto: +goto
                         });
@@ -140,7 +145,8 @@ export default (code) => {
                 currentMachineState = {
                     state,
                     statements: [],
-                    transitions: []
+                    transitions: [],
+                    lineNumber
                 };
                 stateMachine.push(currentMachineState);
                 parserState = STATEMENTS;
@@ -151,5 +157,22 @@ export default (code) => {
         }
         }
     });
+    // Terminate transition chains that use implicit self-loopings
+    stateMachine.forEach(({state, lineNumber, transitions}) => {
+        // Handle end of transitions
+        if(transitions.length === 0) {
+            throw new Error(`State with no transitions at line ${lineNumber}"`);
+        }
+        const lastTransition = transitions.slice(-1)[0];
+        if(typeof lastTransition.condition !== 'undefined') {
+            transitions.push({
+                goto: state
+            });
+        }
+    });
+
+    // Clean up line numbers
+    stateMachine.forEach(state => delete state.lineNumber);
+
     return stateMachine;
 };
