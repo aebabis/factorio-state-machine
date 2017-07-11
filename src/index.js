@@ -3,11 +3,30 @@ import demos from './demos/demos';
 import css from './style.css'; // eslint-disable-line no-unused-vars
 import setupEditor from './editor/main';
 
+import transpiler from './generator/transpiler';
+
 const textarea = document.querySelector('textarea.output');
 const select = document.querySelector('select');
-const editor = document.querySelector('#editor');
+const editorContainer = document.querySelector('#editor');
+const compilerErrorContainer = document.querySelector('.compiler-error');
 
-setupEditor(editor);
+const editor = setupEditor(editorContainer);
+
+const compileText = () => {
+    const code = editor.getValue();
+    try {
+        textarea.textContent = transpiler(code).encode();
+        compilerErrorContainer.innerHTML = '&nbsp';
+    } catch(e) {
+        compilerErrorContainer.textContent = e.message;
+    }
+};
+
+let debounce;
+editor.on('change', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(compileText, 500);
+});
 
 const updateSelect = () => select.setAttribute('selection', select.value);
 
@@ -18,8 +37,9 @@ Object.keys(demos).forEach(name => {
 
     select.addEventListener('change', event => {
         const key = event.target.value;
-        const bp = demos[key]();
-        textarea.textContent = bp.encode();
+        editor.setValue(demos[key]());
+        editor.clearSelection();
+        compileText();
         updateSelect();
     });
 });

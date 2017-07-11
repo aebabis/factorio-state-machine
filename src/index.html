@@ -1,13 +1,18 @@
 <header>Header</header>
+<div class="loader">
+    <label>
+        Load:
+        <select>
+            <option disabled selected value="-1">Select Blueprint</option>
+        </select>
+    </label>
+</div>
 <div class="pane-wrap">
-    <div class="left" id="editor"></div>
+    <div class="left">
+        <div id="editor"></div>
+        <div class="compiler-error">&nbsp;</div>
+    </div>
     <div class="right">
-        <label>
-            Load:
-            <select>
-                <option disabled selected value="-1">Select Blueprint</option>
-            </select>
-        </label>
         <textarea class="output" readonly></textarea>
     </div>
 </div>
