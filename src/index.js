@@ -11,13 +11,15 @@ const editorContainer = document.querySelector('#editor');
 
 const editor = setupEditor(editorContainer);
 
+const compileText = () => {
+    const code = editor.getValue();
+    textarea.textContent = transpiler(code).encode();
+};
+
 let debounce;
 editor.on('change', () => {
     clearTimeout(debounce);
-    debounce = setTimeout(() => {
-        const code = editor.getValue();
-        textarea.textContent = transpiler(code).encode();
-    }, 500);
+    debounce = setTimeout(compileText, 500);
 });
 
 const updateSelect = () => select.setAttribute('selection', select.value);
@@ -29,8 +31,9 @@ Object.keys(demos).forEach(name => {
 
     select.addEventListener('change', event => {
         const key = event.target.value;
-        const bp = demos[key]();
-        textarea.textContent = bp.encode();
+        editor.setValue(demos[key]());
+        editor.clearSelection();
+        compileText();
         updateSelect();
     });
 });
