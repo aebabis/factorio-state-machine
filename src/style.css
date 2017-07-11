@@ -18,6 +18,12 @@ header, footer {
     margin: 10px 10px 0 10px;
 }
 
+select {
+    background-color: rgb(32, 32, 32);
+    color: rgb(140, 140, 140);
+    border: 0;
+}
+
 .pane-wrap {
     flex: 1;
     display: flex;
@@ -32,15 +38,21 @@ header, footer {
     margin-left: 0;
 }
 
-.right {
+.left, .right {
     display: flex;
     flex-direction: column;
 }
 
-select {
-    background-color: rgb(32, 32, 32);
-    color: rgb(140, 140, 140);
-    border: 0;
+#editor {
+    flex: 1;
+}
+
+.compiler-error {
+    color: brown;
+    background-color: rgb(39, 40, 34);
+    padding: 5px;
+    border-top: solid 1px rgb(47, 49, 41);
+    font-family: monospace;
 }
 
 option {

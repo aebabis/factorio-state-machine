@@ -8,12 +8,18 @@ import transpiler from './generator/transpiler';
 const textarea = document.querySelector('textarea.output');
 const select = document.querySelector('select');
 const editorContainer = document.querySelector('#editor');
+const compilerErrorContainer = document.querySelector('.compiler-error');
 
 const editor = setupEditor(editorContainer);
 
 const compileText = () => {
     const code = editor.getValue();
-    textarea.textContent = transpiler(code).encode();
+    try {
+        textarea.textContent = transpiler(code).encode();
+        compilerErrorContainer.innerHTML = '&nbsp';
+    } catch(e) {
+        compilerErrorContainer.textContent = e.message;
+    }
 };
 
 let debounce;

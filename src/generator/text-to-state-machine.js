@@ -135,7 +135,7 @@ export default (code) => {
             if(tokens) {
                 const state = +tokens[1];
                 if(stateMachine.find(item => state === item.state)) {
-                    throw new Error(`Duplicate state label on line ${lineNumber}: ${state}`);
+                    throw new Error(`Duplicate state label on line ${lineNumber}: "${state}"`);
                 }
                 currentMachineState = {
                     state,
@@ -146,7 +146,7 @@ export default (code) => {
                 parserState = STATEMENTS;
                 return;
             } else {
-                throw new Error(`Expected state label on line ${lineNumber}. Found ${line}`);
+                throw new Error(`Expected state label on line ${lineNumber}. Found "${line}"`);
             }
         }
         }
