@@ -1,3 +1,4 @@
+const TIMERS = 'TIMERS';
 const STATE_LABEL = 'STATE_LABEL';
 const STATEMENTS = 'STATEMENTS';
 const TRANSITIONS = 'TRANSITIONS';
@@ -68,8 +69,9 @@ export default (code) => {
         // .replace(/\w+$/gm, '')
         .split('\n');
 
-    let parserState = STATE_LABEL;
-    const stateMachine = [];
+    let parserState = TIMERS;
+    const timers = [];
+    const states = [];
     let currentMachineState;
 
     lines.forEach((line, index) => {
@@ -82,9 +84,21 @@ export default (code) => {
         }
 
         switch(parserState) {
-        case STATEMENTS: {
-            const tokens = line.match(/^\s+(\w+)\s*=[^=](.*)$/);
+        case TIMERS: {
+            const tokens = line.match(/^timer\s+(.*)$/);
             if(tokens) {
+                const [, timer] = tokens;
+                if(timer.match(/^[A-Z]$/)) {
+                    timers.push(timer);
+                    return;
+                } else {
+                    throw new Error(`Illegal timer name "${timer}" on line ${lineNumber}`);
+                }
+            }
+        }
+        case STATEMENTS: { // eslint-disable-line no-fallthrough
+            const tokens = line.match(/^\s+(\w+)\s*=[^=](.*)$/);
+            if(tokens && parserState !== TIMERS) { // TODO: Use an actual parser. This is awful
                 const [, out, expression] = tokens;
                 try {
                     const expressionTree = convertJsepExpressionTree(jsep(expression));
@@ -112,8 +126,8 @@ export default (code) => {
         }
         case TRANSITIONS: { // eslint-disable-line no-fallthrough
             const tokens = line.split('=>');
-            const {transitions} = currentMachineState;
-            if(tokens.length > 1) {
+            if(tokens.length > 1 && parserState !== TIMERS) {
+                const {transitions} = currentMachineState;
                 const prevTransition = transitions.slice(-1)[0];
                 if(prevTransition && typeof prevTransition.condition === 'undefined') {
                     throw new Error(`Unreachable transition on line ${lineNumber}`);
@@ -143,7 +157,7 @@ export default (code) => {
             const tokens = line.match(/^(\d*0):/);
             if(tokens) {
                 const state = +tokens[1];
-                if(stateMachine.find(item => state === item.state)) {
+                if(states.find(item => state === item.state)) {
                     throw new Error(`Duplicate state label on line ${lineNumber}: "${state}"`);
                 }
                 currentMachineState = {
@@ -152,7 +166,7 @@ export default (code) => {
                     transitions: [],
                     lineNumber
                 };
-                stateMachine.push(currentMachineState);
+                states.push(currentMachineState);
                 parserState = STATEMENTS;
                 return;
             } else {
@@ -163,16 +177,16 @@ export default (code) => {
     });
 
     // Check that all transitions are to states that exist
-    stateMachine.forEach(({transitions}) => {
+    states.forEach(({transitions}) => {
         transitions.forEach(({lineNumber, goto}) => {
-            if(!stateMachine.find(({state}) => state === goto)) {
+            if(!states.find(({state}) => state === goto)) {
                 throw new Error(`Transition to non-existant state on line ${lineNumber}`);
             }
         });
     });
 
     // Terminate transition chains that use implicit self-loopings
-    stateMachine.forEach(({state, lineNumber, transitions}) => {
+    states.forEach(({state, lineNumber, transitions}) => {
         // Handle end of transitions
         if(transitions.length === 0) {
             throw new Error(`State with no transitions at line ${lineNumber}`);
@@ -186,9 +200,12 @@ export default (code) => {
     });
 
     // Clean up line numbers and return machine
-    return stateMachine.map(({state, statements, transitions}) => ({
-        state,
-        statements: statements.map(({left, right, operator, out}) => ({left, right, operator, out})),
-        transitions: transitions.map(({condition, goto}) => ({condition, goto}))
-    }));
+    return {
+        timers,
+        states: states.map(({state, statements, transitions}) => ({
+            state,
+            statements: statements.map(({left, right, operator, out}) => ({left, right, operator, out})),
+            transitions: transitions.map(({condition, goto}) => ({condition, goto}))
+        })),
+    };
 };

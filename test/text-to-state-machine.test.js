@@ -11,40 +11,43 @@ describe('text-to-state-machine', () => {
         '    Y = Y + 1\n' +
         '    => 10\n';
 
-        const expected = [{
-            state: 10,
-            statements: [{
-                left: 'X',
-                right: 1,
-                operator: '+',
-                out: 'X'
-            }],
-            transitions: [{
-                condition: {
-                    left: {
-                        left: 'X',
-                        right: 3,
-                        operator: '%'
+        const expected = {
+            timers: [],
+            states: [{
+                state: 10,
+                statements: [{
+                    left: 'X',
+                    right: 1,
+                    operator: '+',
+                    out: 'X'
+                }],
+                transitions: [{
+                    condition: {
+                        left: {
+                            left: 'X',
+                            right: 3,
+                            operator: '%'
+                        },
+                        right: 0,
+                        operator: '=',
                     },
-                    right: 0,
-                    operator: '=',
-                },
-                goto: 20
+                    goto: 20
+                }, {
+                    goto: 10
+                }]
             }, {
-                goto: 10
+                state: 20,
+                statements: [{
+                    left: 'Y',
+                    right: 1,
+                    operator: '+',
+                    out: 'Y'
+                }],
+                transitions: [{
+                    goto: 10
+                }]
             }]
-        }, {
-            state: 20,
-            statements: [{
-                left: 'Y',
-                right: 1,
-                operator: '+',
-                out: 'Y'
-            }],
-            transitions: [{
-                goto: 10
-            }]
-        }];
+        };
 
         const result = textToStateMachine(source);
 
@@ -68,65 +71,68 @@ describe('text-to-state-machine', () => {
         '    X == 0 => 0\n' +
         '    => 30';
 
-        const expected = [{
-            state: 0,
-            statements: [{
-                left: 100,
-                right: 0,
-                operator: '+', // TODO: Should "set immediate" be converted to "+" in the first converter?
-                out: 'A'
-            }],
-            transitions: [{
-                goto: 10
-            }]
-        }, {
-            state: 10,
-            statements: [{
-                left: 'X',
-                right: 1,
-                operator: '+',
-                out: 'X'
-            }],
-            transitions: [{
-                condition: {
-                    left: 'X',
-                    right: 50,
-                    operator: '=',
-                },
-                goto: 20
-            }, {
-                goto: 10
-            }]
-        }, {
-            state: 20,
-            statements: [{
-                left: 200,
-                right: 0,
-                operator: '+',
-                out: 'A'
-            }],
-            transitions: [{
-                goto: 30
-            }]
-        }, {
-            state: 30,
-            statements: [{
-                left: 'X',
-                right: 1,
-                operator: '-',
-                out: 'X'
-            }],
-            transitions: [{
-                condition: {
-                    left: 'X',
+        const expected = {
+            timers: [],
+            states: [{
+                state: 0,
+                statements: [{
+                    left: 100,
                     right: 0,
-                    operator: '=',
-                },
-                goto: 0
+                    operator: '+', // TODO: Should "set immediate" be converted to "+" in the first converter?
+                    out: 'A'
+                }],
+                transitions: [{
+                    goto: 10
+                }]
             }, {
-                goto: 30
+                state: 10,
+                statements: [{
+                    left: 'X',
+                    right: 1,
+                    operator: '+',
+                    out: 'X'
+                }],
+                transitions: [{
+                    condition: {
+                        left: 'X',
+                        right: 50,
+                        operator: '=',
+                    },
+                    goto: 20
+                }, {
+                    goto: 10
+                }]
+            }, {
+                state: 20,
+                statements: [{
+                    left: 200,
+                    right: 0,
+                    operator: '+',
+                    out: 'A'
+                }],
+                transitions: [{
+                    goto: 30
+                }]
+            }, {
+                state: 30,
+                statements: [{
+                    left: 'X',
+                    right: 1,
+                    operator: '-',
+                    out: 'X'
+                }],
+                transitions: [{
+                    condition: {
+                        left: 'X',
+                        right: 0,
+                        operator: '=',
+                    },
+                    goto: 0
+                }, {
+                    goto: 30
+                }]
             }]
-        }];
+        };
 
         const result = textToStateMachine(source);
 
