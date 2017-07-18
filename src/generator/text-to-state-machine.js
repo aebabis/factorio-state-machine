@@ -94,11 +94,13 @@ export default (code) => {
                             left: expressionTree,
                             right: 0,
                             operator: '+',
-                            out
+                            out,
+                            lineNumber
                         });
                     } else {
                         currentMachineState.statements.push(Object.assign({
-                            out
+                            out,
+                            lineNumber
                         }, expressionTree));
                     }
                 } catch(e) {
@@ -119,14 +121,16 @@ export default (code) => {
                 const [expression, goto] = tokens;
                 if(expression.match(/^\s+$/)) {
                     transitions.push({
-                        goto: +goto
+                        goto: +goto,
+                        lineNumber
                     });
                 } else {
                     try {
                         const condition = convertJsepExpressionTree(jsep(expression));
                         transitions.push({
                             condition,
-                            goto: +goto
+                            goto: +goto,
+                            lineNumber
                         });
                     } catch(e) {
                         throw new Error(`Error on line ${lineNumber}: ${e.message}`);
@@ -157,11 +161,21 @@ export default (code) => {
         }
         }
     });
+
+    // Check that all transitions are to states that exist
+    stateMachine.forEach(({transitions}) => {
+        transitions.forEach(({lineNumber, goto}) => {
+            if(!stateMachine.find(({state}) => state === goto)) {
+                throw new Error(`Transition to non-existant state on line ${lineNumber}`);
+            }
+        });
+    });
+
     // Terminate transition chains that use implicit self-loopings
     stateMachine.forEach(({state, lineNumber, transitions}) => {
         // Handle end of transitions
         if(transitions.length === 0) {
-            throw new Error(`State with no transitions at line ${lineNumber}"`);
+            throw new Error(`State with no transitions at line ${lineNumber}`);
         }
         const lastTransition = transitions.slice(-1)[0];
         if(typeof lastTransition.condition !== 'undefined') {
@@ -171,8 +185,10 @@ export default (code) => {
         }
     });
 
-    // Clean up line numbers
-    stateMachine.forEach(state => delete state.lineNumber);
-
-    return stateMachine;
+    // Clean up line numbers and return machine
+    return stateMachine.map(({state, statements, transitions}) => ({
+        state,
+        statements: statements.map(({left, right, operator, out}) => ({left, right, operator, out})),
+        transitions: transitions.map(({condition, goto}) => ({condition, goto}))
+    }));
 };
