@@ -51,9 +51,26 @@ const createCombinator = (bp, type, coords, hasSignalsIn = false, hasSignalsOut 
 };
 
 /**
+ * Adds a combinator representing one of the (global) timer variables in the symbol table.
+ * Timers increment each tick
+ * @param {*} bp - The blueprint
+ * @param {*} varName - The name of the variable (e.g. 'X')
+ * @param {*} coords - Coordinate object of the form `{x, y}`
+ */
+const createTimerCombinator = (bp, varName, coords) => {
+    const combinator = createCombinator(bp, 'arithmetic', coords, true, true);
+    combinator.setCondition({
+        left: varName,
+        right: 1,
+        operator: '+',
+        out: varName
+    });
+};
+
+/**
  * Adds a combinator representing one of the (global) state variables in the symbol table
  * @param {*} bp - The blueprint
- * @param {*} varName - The name of the variables (e.g. 'X')
+ * @param {*} varName - The name of the variable (e.g. 'X')
  * @param {*} coords - Coordinate object of the form `{x, y}`
  */
 const createSymbolCombinator = (bp, varName, coords) => {
@@ -88,14 +105,14 @@ const createLocalConnections = (steps) => {
  * Creates a list of global wire signal names used as state machine
  * variables and a lookup function for converting internal (intermediate calculation)
  * values to the appropriate signal while avoiding collisions.
- * @param {*} stateMachine 
+ * @param {*} states 
  */
-const createSymbolLookup = (stateMachine) => {
+const createSymbolLookup = (states) => {
     // The symbol set is the names of variables 
     // const symbolSet = {};
     const signalSet = {};
 
-    stateMachine.forEach(({statements}) => {
+    states.forEach(({statements}) => {
         statements.forEach(({operations}) => {
             operations.forEach(group => {
                 group.forEach(({left, right, out}) => {
@@ -143,13 +160,21 @@ const createSymbolLookup = (stateMachine) => {
  * Converts an intermediate expanded form state machine
  * object into a blueprint
  */
-export default (stateMachine) => {
+export default ({timers, states}) => {
     const bp = new Blueprint();
 
-    const { signalList, getSymbol } = createSymbolLookup(stateMachine);
+    const { signalList, getSymbol } = createSymbolLookup(states);
+    const timerList = timers.map(letter => `signal_${letter}`);
     let signalY = -1;
-    signalList.forEach(signal => {
+    signalList.filter(signal => !timerList.includes(signal)).forEach(signal => {
         createSymbolCombinator(bp, signal, {x: -3, y: signalY});
+        signalY--;
+        if(signalY % 7 === 0) {
+            signalY--;
+        }
+    });
+    timerList.forEach(timer => {
+        createTimerCombinator(bp, timer, {x: -3, y: signalY});
         signalY--;
         if(signalY % 7 === 0) {
             signalY--;
@@ -159,7 +184,7 @@ export default (stateMachine) => {
 
     // Iterate states
     let y = 1;
-    stateMachine.forEach(({statements}) => {
+    states.forEach(({statements}) => {
         statements.forEach(({start, operations}) => {
             const height = operations.map(group => group.length).reduce((a, b) => Math.max(a, b), 1);
             createLocalConnections(
