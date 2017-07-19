@@ -97,30 +97,47 @@ export default (code) => {
             }
         }
         case STATEMENTS: { // eslint-disable-line no-fallthrough
-            const tokens = line.match(/^\s+(\w+)\s*=[^=](.*)$/);
-            if(tokens && parserState !== TIMERS) { // TODO: Use an actual parser. This is awful
-                const [, out, expression] = tokens;
-                try {
-                    const expressionTree = convertJsepExpressionTree(jsep(expression));
-                    if(typeof expressionTree === 'number') {
-                        // Set immediate
-                        currentMachineState.statements.push({
-                            left: expressionTree,
-                            right: 0,
-                            operator: '+',
-                            out,
-                            lineNumber
-                        });
-                    } else {
-                        currentMachineState.statements.push(Object.assign({
-                            out,
-                            lineNumber
-                        }, expressionTree));
-                    }
-                } catch(e) {
-                    throw new Error(`Error on line ${lineNumber}: ${e.message}`);
+            const timerTokens = line.match(/^\s+reset\s+(.*)$/);
+            if(timerTokens) {
+                const [, timer] = timerTokens;
+                if(timer.match(/^[A-Z]$/)) {
+                    currentMachineState.statements.push({
+                        left: 0,
+                        right: 0,
+                        operator: '+',
+                        out: timer,
+                        lineNumber
+                    });
+                    return;
+                } else {
+                    throw new Error(`Illegal timer name "${timer}" on line ${lineNumber}`);
                 }
-                return;
+            } else {
+                const tokens = line.match(/^\s+(\w+)\s*=[^=](.*)$/);
+                if(tokens && parserState !== TIMERS) { // TODO: Use an actual parser. This is awful
+                    const [, out, expression] = tokens;
+                    try {
+                        const expressionTree = convertJsepExpressionTree(jsep(expression));
+                        if(typeof expressionTree === 'number') {
+                            // Set immediate
+                            currentMachineState.statements.push({
+                                left: expressionTree,
+                                right: 0,
+                                operator: '+',
+                                out,
+                                lineNumber
+                            });
+                        } else {
+                            currentMachineState.statements.push(Object.assign({
+                                out,
+                                lineNumber
+                            }, expressionTree));
+                        }
+                    } catch(e) {
+                        throw new Error(`Error on line ${lineNumber}: ${e.message}`);
+                    }
+                    return;
+                }
             }
             // If no statement, fall through to transitions
         }
