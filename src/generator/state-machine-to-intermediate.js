@@ -158,69 +158,72 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
  * into an intermediate form that's easier to make
  * into a blueprint
  */
-export default (stateMachine) => {
-    return stateMachine.map(({state, statements, transitions}) => {
-        // TODO: Parallelize statements that can be run in parallel
-        // TODO: Perform tree rotations for statements with commutativity?
-        // If it's addition, it can be all run in a single tick. If it's
-        // multiplication, then it can't
-        let substate = state;
-        const intermediateStatements = statements.map(statement => {
-            const operations = getIntermediateFormOf(statement);
-            const start = substate;
-            substate += operations.length;
-            return {
-                start,
-                operations
-            };
-        });
-        let hasUnconditionalBranch;
-        const intermediateBranches = transitions.map(({condition, goto}) => {
-            if(hasUnconditionalBranch) {
-                throw new Error('Unreachable statement');
-                // TODO: Unit test this
-                // TOOD: Find other forms of unreachable statements
-                // TODO: Include line number :)
-            }
-            const start = substate;
-            if(condition) {
-                const operations = getIntermediateFormOf(condition);
-                operations.slice(-1)[0].push({
-                    guard: true
-                });
-                operations.push([{
-                    left: 'INT_A',
-                    right: 'GUARD',
-                    operator: '*',
-                    out: 'INT_A'
-                }]);
-                operations.push([{
-                    branch: 'INT_A',
-                    goto
-                }]);
+export default ({timers, states}) => {
+    return {
+        timers,
+        states: states.map(({state, statements, transitions}) => {
+            // TODO: Parallelize statements that can be run in parallel
+            // TODO: Perform tree rotations for statements with commutativity?
+            // If it's addition, it can be all run in a single tick. If it's
+            // multiplication, then it can't
+            let substate = state;
+            const intermediateStatements = statements.map(statement => {
+                const operations = getIntermediateFormOf(statement);
+                const start = substate;
                 substate += operations.length;
-                // TODO: Stagger branches so they end 1 tick apart
-                // instead of standing end-to-end
                 return {
                     start,
                     operations
                 };
-            } else {
-                hasUnconditionalBranch = true;
-                return {
-                    start,
-                    operations: [[{
+            });
+            let hasUnconditionalBranch;
+            const intermediateBranches = transitions.map(({condition, goto}) => {
+                if(hasUnconditionalBranch) {
+                    throw new Error('Unreachable statement');
+                    // TODO: Unit test this
+                    // TOOD: Find other forms of unreachable statements
+                    // TODO: Include line number :)
+                }
+                const start = substate;
+                if(condition) {
+                    const operations = getIntermediateFormOf(condition);
+                    operations.slice(-1)[0].push({
                         guard: true
-                    }], [{
-                        branch: 'GUARD',
+                    });
+                    operations.push([{
+                        left: 'INT_A',
+                        right: 'GUARD',
+                        operator: '*',
+                        out: 'INT_A'
+                    }]);
+                    operations.push([{
+                        branch: 'INT_A',
                         goto
-                    }]]
-                };
-            }
-        });
-        return {
-            state,
-            statements: intermediateStatements.concat(intermediateBranches)
-        };
-    });
+                    }]);
+                    substate += operations.length;
+                    // TODO: Stagger branches so they end 1 tick apart
+                    // instead of standing end-to-end
+                    return {
+                        start,
+                        operations
+                    };
+                } else {
+                    hasUnconditionalBranch = true;
+                    return {
+                        start,
+                        operations: [[{
+                            guard: true
+                        }], [{
+                            branch: 'GUARD',
+                            goto
+                        }]]
+                    };
+                }
+            });
+            return {
+                state,
+                statements: intermediateStatements.concat(intermediateBranches)
+            };
+        })
+    };
 };
