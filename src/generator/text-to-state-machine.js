@@ -79,7 +79,8 @@ export default (code) => {
             line = line.slice(0, -1);
         }
         const lineNumber = index + 1;
-        if(line === '') {
+        // Ignore whitespace only lines
+        if(line.match(/^\s*$/)) {
             return;
         }
 
