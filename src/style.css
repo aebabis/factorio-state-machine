@@ -14,6 +14,43 @@ header, footer {
     padding: 10px;
 }
 
+a {
+    color: steelblue;
+    text-decoration: none;
+    font-family: Verdana;
+    font-size: 13px;
+}
+
+a:hover {
+    color: rgb(150, 200, 255);
+}
+
+a[href^="https://github.com"]:before {
+    content: " ";
+    display: inline-block;
+    margin-right: .4em;
+    width: .8em;
+    height: .8em;
+    background-image: url("./images/GitHub-Mark-Light-32px.png");
+    background-size: 100%;
+} 
+
+h1 {
+    font-size: 1.5em;
+    margin: 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+p.tagline {
+    margin: 0 0 0 1em;
+    font-size: 14px;
+    font-style: italic;
+    color: rgb(100, 100, 100);
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .loader {
     margin: 10px 10px 0 10px;
 }
