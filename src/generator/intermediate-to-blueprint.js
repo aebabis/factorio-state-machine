@@ -150,7 +150,7 @@ const createSymbolLookup = (states) => {
             } else if(varName.match(/^signal_.*/)) {
                 return varName;
             } else {
-                throw new Error(`Illegal internal variable name: ${varName}`);
+                return varName;
             }
         }
     };
@@ -187,6 +187,7 @@ export default ({timers, states}) => {
     states.forEach(({statements}) => {
         statements.forEach(({start, operations}) => {
             const height = operations.map(group => group.length).reduce((a, b) => Math.max(a, b), 1);
+            // TODO: Show line number when an unknown signal causes an exception
             createLocalConnections(
                 operations.map((group, groupIndex) => group.map((operation, operationIndex) => {
                     const state = start + groupIndex;
