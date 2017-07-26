@@ -1,20 +1,20 @@
 program
-  -> timer:* state:+
+  -> timer:* state:+ _
   {%
     (data, location, reject) => ({timers: data[0], states: data[1]})
   %}
 timer
-  -> "timer" __ [A-Z] _ {%
-    (data) => data[2]
+  -> _ "timer" __ [A-Z] {%
+    (data) => data[3]
   %}
 state
   -> stateLabel statement:* transition:+ {%
     (data) => ({state: data[0], statements: data[1], transitions: data[2]})
   %}
 stateLabel
-  -> integer ":" {% (data) => data[0] %}
+  -> _ integer ":" {% (data) => data[1] %}
 statement
-  -> _ signal _ "=" _ expression _ {%
+  -> _ signal _ "=" _ expression {%
     (data) => ({
       left: data[5],
       right: 0,
@@ -22,7 +22,7 @@ statement
       out: data[1]
     })
   %}
-  | _ "reset" __ [A-Z] _ {%
+  | _ "reset" __ [A-Z] {%
     (data) => ({
       left: 0,
       right: 0,
@@ -31,7 +31,7 @@ statement
     })
   %}
 transition
-  -> _ expression:? _ "=>" _ integer _ {%
+  -> _ expression:? _ "=>" _ integer {%
     (data) => ({
       condition: data[1],
       goto: data[5]
