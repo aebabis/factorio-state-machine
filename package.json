@@ -7,7 +7,12 @@
     "install": "webpack",
     "start": "http-server dist",
     "dev": "webpack-dev-server",
-    "test": "jest"
+    "test": "nearleyc src/generator/grammar.ne > dist/grammar.js && jest"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "\\.(ne)": "<rootDir>/dist/grammar.js"
+    }
   },
   "author": "",
   "license": "MIT",
