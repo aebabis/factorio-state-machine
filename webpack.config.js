@@ -28,6 +28,9 @@ module.exports = {
                 presets: ['es2015']
             }
         }, {
+            test: /\.ne$/,
+            use: ['nearley-loader']
+        }, {
             test: /\.css$/,
             use: ['style-loader', 'css-loader']
         }, {
