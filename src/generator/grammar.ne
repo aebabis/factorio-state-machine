@@ -9,7 +9,20 @@ timer
   %}
 state
   -> stateLabel statement:* transition:+ {%
-    (data) => ({state: data[0], statements: data[1], transitions: data[2]})
+    ([state, statements, transitions]) => {
+      // If last transition is a conditional jump
+      if(transitions.slice(-1)[0].condition != null) {
+        // Add an unconditional jump to the top of the current state
+        transitions = transitions.concat({
+          goto: state
+        });
+      }
+      return {
+        state,
+        statements,
+        transitions
+      };
+    }
   %}
 stateLabel
   -> _ integer ":" {% (data) => data[1] %}
@@ -17,8 +30,9 @@ statement
   -> _ signal _ "=" _ expression {%
     ([, signal, , , , expression]) => {
       if(typeof expression.right !== 'undefined') {
-        expression.out = signal;
-        return expression;
+        return Object.assign({}, expression, {
+          out: signal
+        });
       } else {
         return {
           left: expression,
@@ -112,6 +126,5 @@ integer
   -> [0-9]:+ {% (data) => +data[0].join('') %}
 _
   -> [\s\r\n]:* {% () => null %}
-
 __
   -> [\s\r\n]:+ {% () => null %}

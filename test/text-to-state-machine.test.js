@@ -138,4 +138,46 @@ describe('text-to-state-machine', () => {
 
         expect(result).toEqual(expected);
     });
+
+    test('should convert the source code for a repeating timer machine to state machine notation', () => {
+        const source =
+        '10:\n' +
+        '    T > 600 => 20\n' +
+        '20:\n' +
+        '    reset T\n' +
+        '    => 10\n';
+
+        const expected = {
+            timers: [],
+            states: [{
+                state: 10,
+                statements: [],
+                transitions: [{
+                    condition: {
+                        left: 'T',
+                        right: 600,
+                        operator: '>',
+                    },
+                    goto: 20
+                }, {
+                    goto: 10
+                }]
+            }, {
+                state: 20,
+                statements: [{
+                    left: 0,
+                    right: 0,
+                    operator: '+',
+                    out: 'T'
+                }],
+                transitions: [{
+                    goto: 10
+                }]
+            }]
+        };
+
+        const result = textToStateMachine(source);
+
+        expect(result).toEqual(expected);
+    });
 });
