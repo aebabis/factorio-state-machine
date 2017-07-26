@@ -15,12 +15,19 @@ stateLabel
   -> _ integer ":" {% (data) => data[1] %}
 statement
   -> _ signal _ "=" _ expression {%
-    (data) => ({
-      left: data[5],
-      right: 0,
-      operator: '+',
-      out: data[1]
-    })
+    ([, signal, , , , expression]) => {
+      if(typeof expression.right !== 'undefined') {
+        expression.out = signal;
+        return expression;
+      } else {
+        return {
+          left: expression,
+          right: 0,
+          operator: '+',
+          out: signal
+        };
+      }
+    }
   %}
   | _ "reset" __ [A-Z] {%
     (data) => ({
@@ -32,10 +39,18 @@ statement
   %}
 transition
   -> _ expression:? _ "=>" _ integer {%
-    (data) => ({
-      condition: data[1],
-      goto: data[5]
-    })
+    ([, condition, , , , goto]) => {
+      if(condition != null) {
+        return {
+          condition,
+          goto
+        };
+      } else {
+        return {
+          goto
+        };
+      }
+    }
   %}
 expression
   -> signal {% (data) => data[0] %}
