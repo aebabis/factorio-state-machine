@@ -1,8 +1,8 @@
 import nearley from 'nearley';
 import Grammar from './grammar.ne';
-import unparse from 'nearley-unparse';
 
-console.log("dummy", unparse(Grammar));
+// import unparse from 'nearley-unparse';
+// console.log("dummy", unparse(Grammar));
 
 const removeComments = (lines) => {
     return lines
@@ -17,8 +17,5 @@ export default (code) => {
     parser.feed(lines);
     const {results} = parser;
 
-    console.log('RESULTS', results);
-    console.log(JSON.stringify(results[0], null, 2) === JSON.stringify(results[1], null, 2));
-    
     return results[0];
 };

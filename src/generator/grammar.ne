@@ -1,7 +1,7 @@
 program
   -> timer:* state:+ _
   {%
-    (data, location, reject) => ({timers: data[0], states: data[1]})
+    ([timers, states]) => ({timers, states})
   %}
 timer
   -> _ "timer" __ [A-Z] {%
