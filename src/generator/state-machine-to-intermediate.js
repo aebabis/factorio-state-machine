@@ -159,71 +159,87 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
  * into a blueprint
  */
 export default ({timers, states}) => {
-    return {
-        timers,
-        states: states.map(({state, statements, transitions}) => {
-            // TODO: Parallelize statements that can be run in parallel
-            // TODO: Perform tree rotations for statements with commutativity?
-            // If it's addition, it can be all run in a single tick. If it's
-            // multiplication, then it can't
-            let substate = state;
-            const intermediateStatements = statements.map(statement => {
-                const operations = getIntermediateFormOf(statement);
-                const start = substate;
+    states = states.map(({state, statements, transitions}) => {
+        // TODO: Parallelize statements that can be run in parallel
+        // TODO: Perform tree rotations for statements with commutativity?
+        // If it's addition, it can be all run in a single tick. If it's
+        // multiplication, then it can't
+        let substate = state;
+        const intermediateStatements = statements.map(statement => {
+            const operations = getIntermediateFormOf(statement);
+            const start = substate;
+            substate += operations.length;
+            return {
+                start,
+                operations
+            };
+        });
+        let hasUnconditionalBranch;
+        const intermediateBranches = transitions.map(({condition, goto}) => {
+            if(hasUnconditionalBranch) {
+                throw new Error('Unreachable statement');
+                // TODO: Unit test this
+                // TOOD: Find other forms of unreachable statements
+                // TODO: Include line number :)
+            }
+            const start = substate;
+            if(condition) {
+                const operations = getIntermediateFormOf(condition);
+                operations.slice(-1)[0].push({
+                    guard: true
+                });
+                operations.push([{
+                    left: 'INT_A',
+                    right: 'GUARD',
+                    operator: '*',
+                    out: 'INT_A'
+                }]);
+                operations.push([{
+                    branch: 'INT_A',
+                    goto
+                }]);
                 substate += operations.length;
+                // TODO: Stagger branches so they end 1 tick apart
+                // instead of standing end-to-end
                 return {
                     start,
                     operations
                 };
-            });
-            let hasUnconditionalBranch;
-            const intermediateBranches = transitions.map(({condition, goto}) => {
-                if(hasUnconditionalBranch) {
-                    throw new Error('Unreachable statement');
-                    // TODO: Unit test this
-                    // TOOD: Find other forms of unreachable statements
-                    // TODO: Include line number :)
-                }
-                const start = substate;
-                if(condition) {
-                    const operations = getIntermediateFormOf(condition);
-                    operations.slice(-1)[0].push({
+            } else {
+                hasUnconditionalBranch = true;
+                return {
+                    start,
+                    operations: [[{
                         guard: true
-                    });
-                    operations.push([{
-                        left: 'INT_A',
-                        right: 'GUARD',
-                        operator: '*',
-                        out: 'INT_A'
-                    }]);
-                    operations.push([{
-                        branch: 'INT_A',
+                    }], [{
+                        branch: 'GUARD',
                         goto
-                    }]);
-                    substate += operations.length;
-                    // TODO: Stagger branches so they end 1 tick apart
-                    // instead of standing end-to-end
-                    return {
-                        start,
-                        operations
-                    };
-                } else {
-                    hasUnconditionalBranch = true;
-                    return {
-                        start,
-                        operations: [[{
-                            guard: true
-                        }], [{
-                            branch: 'GUARD',
-                            goto
-                        }]]
-                    };
-                }
-            });
-            return {
-                state,
-                statements: intermediateStatements.concat(intermediateBranches)
-            };
-        })
+                    }]]
+                };
+            }
+        });
+        return {
+            state,
+            statements: intermediateStatements.concat(intermediateBranches)
+        };
+    });
+
+    // Since each statement group in the statement group array has time
+    // given by (state + offset), we can determine the instruction-pointer-time
+    // of each statement. If any statement bleeds into another state, we throw an error
+    states.forEach(({state, statements}) => {
+        const start = state;
+        const end = state + statements.length; // Last statement is always a branch, so no need to check past end
+        states.forEach(({state}) => {
+            if(start < state && end >= state) {
+                const bleed = end - state + 1;
+                throw new Error(`State ${start} implicitly overlaps state ${state} by ${bleed} instruction${bleed === 1 ? '' : 's'}. Consider increasing label value of state ${state}`);
+            }
+        });
+    });
+
+    return {
+        timers,
+        states
     };
 };
