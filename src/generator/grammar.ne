@@ -67,8 +67,7 @@ transition
     }
   %}
 expression
-  -> "(" _ expression _ ")" {% (data) => data[2] %}
-  | orExpression {% ([expression]) => expression %}
+  -> orExpression {% ([expression]) => expression %}
 orExpression -> orExpression _ orOperand _ andExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
   | andExpression {% ([match]) => match %}
 andExpression -> andExpression _ andOperand _ xorExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
@@ -87,7 +86,9 @@ multExpression -> multExpression _ multOperand _ expExpression {% ([left, , oper
   | expExpression {% ([match]) => match %}
 expExpression -> unaryExpression _ expOperand _ expExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
   | unaryExpression {% ([match]) => match %}
-unaryExpression -> unaryOperand _ terminalExpression {% ([operator, , left]) => ({left, operator}) %}
+unaryExpression -> unaryOperand _ expression {% ([operator, , left]) => ({left, operator}) %}
+  | groupedExpression {% ([match]) => match %}
+groupedExpression -> "(" _ expression _ ")" {% (data) => data[2] %}
   | terminalExpression {% ([match]) => match %}
 terminalExpression
   -> signal {% (data) => data[0] %}
