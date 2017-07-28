@@ -86,7 +86,7 @@ multExpression -> multExpression _ multOperand _ expExpression {% ([left, , oper
   | expExpression {% ([match]) => match %}
 expExpression -> unaryExpression _ expOperand _ expExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
   | unaryExpression {% ([match]) => match %}
-unaryExpression -> unaryOperand _ expression {% ([operator, , left]) => ({left, operator}) %}
+unaryExpression -> unaryOperand _ expression {% ([, , left]) => ({left: {left, operator: '+', right: 1}, operator: '=', right: 1}) %}
   | groupedExpression {% ([match]) => match %}
 groupedExpression -> "(" _ expression _ ")" {% (data) => data[2] %}
   | terminalExpression {% ([match]) => match %}
