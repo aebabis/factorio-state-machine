@@ -23,7 +23,7 @@ uses.
 Timers, if used, must be declared at the beginning of a program.
 If a variable is declared as a timer, the corresponding signal will be automatically incremented by 1 each tick.
 The timer can still be read and written to as a normal variable.
-Only letters signals can be timers.
+Only letter signals can be timers.
 
 ```
 timer T
@@ -123,7 +123,7 @@ as needed.
 ## Use with Machines
 
 Most of the time, you will want your state machine to control machines such as inserters.
-To do this, connect them to the logistic network using red wires, then set them to check the 
+To do this, connect them to the circuit network using red wires, then set them to check the 
 target condition.
 Remember that you can use the instruction pointer (`signal_S`) as part of a condition.
 This can prevent the need for flag variables.
