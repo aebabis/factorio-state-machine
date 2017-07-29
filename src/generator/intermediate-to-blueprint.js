@@ -187,6 +187,15 @@ export default ({timers, states}) => {
     states.forEach(({statements}) => {
         statements.forEach(({start, operations}) => {
             const height = operations.map(group => group.length).reduce((a, b) => Math.max(a, b), 1);
+            const offset = y % 7;
+            // Check to see if group will over lap a pole
+            // TODO: Use a packing algorithm
+            if(offset === 0) {
+                y++;
+            } else if(offset + height > 7) {
+                // Go past next pole
+                y += 8 - offset;
+            }
             // TODO: Show line number when an unknown signal causes an exception
             createLocalConnections(
                 operations.map((group, groupIndex) => group.map((operation, operationIndex) => {
@@ -236,9 +245,6 @@ export default ({timers, states}) => {
                 }))
             );
             y += height;
-            if(y % 7 === 0) {
-                y++; // TODO: Handle multi-height groups touching poles
-            }
         });
     });
 
