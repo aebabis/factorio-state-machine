@@ -11,12 +11,12 @@ export default () => 'timer W\n' +
 '  => 30\n' +
 '30:\n' +
 '  D = D + 1 // Increment divisor\n' +
-'  D * D > X => 40 // Number is prime\n' +
-'  X % D => 30 // Number might still be prime\n' +
+'  D * D > X => 50 // Number is prime\n' +
+'  X % D > 0 => 30 // Number might still be prime\n' +
 '  => 20 // Number is composite\n' +
-'40:\n' +
-'  W > 120 => 50 // Wait at least 2 seconds in between outputting primes\n' +
 '50:\n' +
+'  W > 120 => 60 // Wait at least 2 seconds in between outputting primes\n' +
+'60:\n' +
 '  reset W\n' +
 '  P = X // Output prime number to signal_P. 7-segment displays can show it\n' +
 '  => 20';

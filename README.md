@@ -143,12 +143,12 @@ timer W
   => 30
 30:
   D = D + 1 // Increment divisor
-  D * D > X => 40 // Number is prime
-  X % D => 30 // Number might still be prime
+  D * D > X => 50 // Number is prime
+  X % D > 0 => 30 // Number might still be prime
   => 20 // Number is composite
-40:
-  W > 120 => 50 // Wait at least 2 seconds in between outputting primes
 50:
+  W > 120 => 60 // Wait at least 2 seconds in between outputting primes
+60:
   reset W
   P = X // Output prime number to signal_P. 7-segment displays can show it
   => 20
