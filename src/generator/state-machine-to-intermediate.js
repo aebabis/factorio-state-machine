@@ -229,7 +229,9 @@ export default ({timers, states}) => {
     // of each statement. If any statement bleeds into another state, we throw an error
     states.forEach(({state, statements}) => {
         const start = state;
-        const end = state + statements.length; // Last statement is always a branch, so no need to check past end
+        const end = statements
+            .map(({start, operations}) => start + operations.length)
+            .reduce((a, b) => Math.max(a, b), 0); // Last statement is always a branch, so no need to check past end
         states.forEach(({state}) => {
             if(start < state && end >= state) {
                 const bleed = end - state + 1;
