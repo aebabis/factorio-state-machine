@@ -16,6 +16,18 @@ export default (code) => {
 
     parser.feed(lines);
     const {results} = parser;
+    const [result] = results;
 
-    return results[0];
+    const {states} = result;
+
+    // Check transitions to ensure they only go to states which exist
+    states.forEach(({state, transitions}) => {
+        transitions.forEach(({goto}) => {
+            if(!states.find(({state}) => state === goto)) {
+                throw new Error(`State ${state} contains transition to undefined state ${goto}`);
+            }
+        });
+    });
+
+    return result;
 };
