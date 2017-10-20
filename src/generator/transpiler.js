@@ -7,5 +7,5 @@ export default (lines) => {
     const intermediate = stateMachineToIntermediate(stateMachine);
     const blueprint = intermediateToBlueprint(intermediate);
 
-    return blueprint;
+    return stateMachine;
 };
