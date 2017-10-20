@@ -228,7 +228,7 @@ export default ({timers, states}) => {
                         const leftSymbol = getSymbol(left);
                         const rightSymbol = getSymbol(right);
                         const outSymbol = getSymbol(out);
-                        const opSymbol = operator == '<=' ? '\u2265' : (operator == '>='? '\u2264' : (operator == '!=' ? '\u2260' : operator));
+                        const opSymbol = operator == '<=' ? '\u2264' : (operator == '>='? '\u2265' : (operator == '!=' ? '\u2260' : operator));
                         return createCombinator(
                             bp,
                             type,
