@@ -5,6 +5,8 @@ import setupEditor from './editor/main';
 
 import transpiler from './generator/transpiler';
 
+import './favicon.ico';
+
 const textarea = document.querySelector('textarea.output');
 const select = document.querySelector('select');
 const editorContainer = document.querySelector('#editor');
