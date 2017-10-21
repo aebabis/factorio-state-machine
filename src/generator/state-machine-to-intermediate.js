@@ -118,7 +118,8 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
             mergedArray.push([{
                 left: getSymbolFor(leftVar),
                 right: getSymbolFor(rightVar),
-                operator,
+                operator: operator,
+                countFromInput: ['=', '<', '>', '<=', '>=', '!='].includes(operator) ? false : undefined,
                 out: getSymbolFor('INT_A')
             }, {
                 // Subtract old value of 'out' from result
