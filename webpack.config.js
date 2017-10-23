@@ -14,7 +14,8 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             title: 'Factorio State Machine',
-            template: path.join(__dirname, 'src', 'index.html')
+            template: path.join(__dirname, 'src', 'index.html'),
+            favicon: './src/favicon.ico'
         }),
         new webpack.HotModuleReplacementPlugin(),
         new webpack.NoEmitOnErrorsPlugin(),
@@ -34,7 +35,7 @@ module.exports = {
             test: /\.css$/,
             use: ['style-loader', 'css-loader']
         }, {
-            test: /\.(png|jpg)$/,
+            test: /\.(png|jpg|ico)$/,
             loader: ['url-loader']
         }],
     },
