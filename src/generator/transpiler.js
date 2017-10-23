@@ -1,11 +1,13 @@
 import textToStateMachine from './text-to-state-machine';
 import stateMachineToIntermediate from './state-machine-to-intermediate';
-import intermediateToBlueprint from './intermediate-to-blueprint';
+import intermediateToCombinators from './intermediate-to-combinators';
+import combinatorsToBlueprint from './combinators-to-blueprint';
 
 export default (lines) => {
     const stateMachine = textToStateMachine(lines);
     const intermediate = stateMachineToIntermediate(stateMachine);
-    const blueprint = intermediateToBlueprint(intermediate);
+    const combinators = intermediateToCombinators(intermediate);
+    const blueprint = combinatorsToBlueprint(combinators);
 
     return blueprint;
 };
