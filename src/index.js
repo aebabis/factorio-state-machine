@@ -8,16 +8,19 @@ import transpiler from './generator/transpiler';
 import './favicon.ico';
 
 const textarea = document.querySelector('textarea.output');
-const select = document.querySelector('select');
+const loader = document.querySelector('select.load');
+const packingAlgorithm = document.querySelector('select.packing');
 const editorContainer = document.querySelector('#editor');
 const compilerErrorContainer = document.querySelector('.compiler-error');
 
 const editor = setupEditor(editorContainer);
 
+let pack = true;
+
 const compileText = () => {
     const code = editor.getValue();
     try {
-        textarea.textContent = transpiler(code).encode();
+        textarea.textContent = transpiler(code, {pack: pack}).encode();
         compilerErrorContainer.innerHTML = '&nbsp';
     } catch(e) {
         console.error(e);
@@ -31,14 +34,14 @@ editor.on('change', () => {
     debounce = setTimeout(compileText, 500);
 });
 
-const updateSelect = () => select.setAttribute('selection', select.value);
+const updateSelect = () => loader.setAttribute('selection', loader.value);
 
 Object.keys(demos).forEach(name => {
     const option = document.createElement('option');
     option.textContent = name;
-    select.appendChild(option);
+    loader.appendChild(option);
 
-    select.addEventListener('change', event => {
+    loader.addEventListener('change', event => {
         const key = event.target.value;
         editor.setValue(demos[key]());
         editor.clearSelection();
@@ -46,6 +49,12 @@ Object.keys(demos).forEach(name => {
         updateSelect();
     });
 });
+
+packingAlgorithm.addEventListener('change', event => {
+    pack = event.target.value === 'compact';
+    compileText();
+});
+
 updateSelect();
 
 textarea.addEventListener('focus', () => textarea.select());

@@ -51,8 +51,12 @@ p.tagline {
     vertical-align: middle;
 }
 
-.loader {
+.toolbar {
     margin: 10px 10px 0 10px;
+}
+
+.toolbar label + label {
+    margin-left: 15px;
 }
 
 select {

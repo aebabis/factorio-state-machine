@@ -2,11 +2,19 @@
     <h1>Factorio State Machine</h1>
     <p class="tagline">Control Circuits Made Easy</p>
 </header>
-<div class="loader">
+<div class="toolbar">
     <label>
         Load:
-        <select>
+        <select class="load">
             <option disabled selected value="-1">Select Blueprint</option>
+        </select>
+    </label>
+    <label>
+        Layout:
+        <select class="packing">
+            <option disabled value="-1">Combinator Packing Algorithm</option>
+            <option selected value="compact">Compact</option>
+            <option value="debug">Debug</option>
         </select>
     </label>
 </div>
