@@ -104,8 +104,31 @@ export default ({clock, signals, timers, states}) => {
     };
 
     // Place combinators
-    const clockCombinator = getCombinator(bp, clock, coordGenerator.next().value);
+    const clockCoords = coordGenerator.next().value;
+    const clockCombinator = getCombinator(bp, clock, clockCoords);
     clockCombinator.setConstant(0, clock.signal, 1);
+    clockCombinator.constantEnabled = false;
+    const speaker = bp.createEntity('programmable_speaker', {
+        x: clockCoords.x + 1,
+        y: clockCoords.y
+    }, 2).setCondition({
+        left: clock.signal,
+        right: 0,
+        operator: '='
+    }).setParameters({
+        volume: 0,
+        playGlobally: false,
+        allowPolyphony: false
+    }).setAlertParameters({
+        showAlert: true,
+        showOnMap: true,
+        iconSignalId: {
+            type: 'item',
+            name: 'constant_combinator'
+        },
+        message: 'State machine hasn\'t been turned on'
+    });
+    clockCombinator.connect(speaker, 1, 1, 'red');
 
     signals.forEach(signal => {
         getCombinator(bp, signal, coordGenerator.next().value);

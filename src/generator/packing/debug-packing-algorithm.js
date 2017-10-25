@@ -59,6 +59,7 @@ export default ({clock, signals, timers, states}) => {
     });
     const clockCombinator = getCombinator(bp, clock, {x: -3, y: signalY});
     clockCombinator.setConstant(0, clock.signal, 1);
+    clockCombinator.constantEnabled = false;
 
     // Iterate states
     let y = 1;
