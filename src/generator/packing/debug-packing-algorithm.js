@@ -1,5 +1,5 @@
 import Blueprint from 'factorio-blueprint';
-import createLocalConnections from './create-local-connections';
+import PackingUtil from './util';
 
 export default ({clock, signals, timers, states}) => {
     const bp = new Blueprint();
@@ -59,6 +59,8 @@ export default ({clock, signals, timers, states}) => {
     });
     const clockCombinator = getCombinator(bp, clock, {x: -3, y: signalY});
     clockCombinator.setConstant(0, clock.signal, 1);
+    clockCombinator.constantEnabled = false;
+    PackingUtil.createSpeaker(bp, clockCombinator);
 
     // Iterate states
     let y = 1;
@@ -83,7 +85,7 @@ export default ({clock, signals, timers, states}) => {
                 });
             });
 
-            createLocalConnections(operationGroup);
+            PackingUtil.createLocalConnections(operationGroup);
 
             y += height;
         });

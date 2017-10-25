@@ -1,5 +1,5 @@
 import Blueprint from 'factorio-blueprint';
-import createLocalConnections from './create-local-connections';
+import PackingUtil from './util';
 
 const SUBSTATION_SPACING = 16;
 
@@ -104,8 +104,11 @@ export default ({clock, signals, timers, states}) => {
     };
 
     // Place combinators
-    const clockCombinator = getCombinator(bp, clock, coordGenerator.next().value);
+    const clockCoords = coordGenerator.next().value;
+    const clockCombinator = getCombinator(bp, clock, clockCoords);
     clockCombinator.setConstant(0, clock.signal, 1);
+    clockCombinator.constantEnabled = false;
+    PackingUtil.createSpeaker(bp, clockCombinator);
 
     signals.forEach(signal => {
         getCombinator(bp, signal, coordGenerator.next().value);
@@ -124,7 +127,7 @@ export default ({clock, signals, timers, states}) => {
             });
 
             // Connect statement combinators with green wire
-            createLocalConnections(operationGroup);
+            PackingUtil.createLocalConnections(operationGroup);
         });
     });
 
