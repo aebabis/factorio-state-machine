@@ -56,25 +56,25 @@ describe('text-to-state-machine', () => {
 
     test('should convert the source code for the simple toggle machine to state machine notation', () => {
         const source =
-        '0:\n' +
-        '    A = 100\n' +
-        '    => 10\n' +
         '10:\n' +
-        '    X = X + 1\n' +
-        '    X == 50 => 20\n' +
-        '    => 10\n' +
+        '    A = 100\n' +
+        '    => 20\n' +
         '20:\n' +
-        '    A = 200\n' +
-        '    => 30\n' +
+        '    X = X + 1\n' +
+        '    X == 50 => 30\n' +
+        '    => 20\n' +
         '30:\n' +
+        '    A = 200\n' +
+        '    => 40\n' +
+        '40:\n' +
         '    X = X - 1\n' +
-        '    X == 0 => 0\n' +
-        '    => 30';
+        '    X == 0 => 10\n' +
+        '    => 40';
 
         const expected = {
             timers: [],
             states: [{
-                state: 0,
+                state: 10,
                 statements: [{
                     left: 100,
                     right: 0,
@@ -82,10 +82,10 @@ describe('text-to-state-machine', () => {
                     out: 'A'
                 }],
                 transitions: [{
-                    goto: 10
+                    goto: 20
                 }]
             }, {
-                state: 10,
+                state: 20,
                 statements: [{
                     left: 'X',
                     right: 1,
@@ -98,12 +98,12 @@ describe('text-to-state-machine', () => {
                         right: 50,
                         operator: '=',
                     },
-                    goto: 20
+                    goto: 30
                 }, {
-                    goto: 10
+                    goto: 20
                 }]
             }, {
-                state: 20,
+                state: 30,
                 statements: [{
                     left: 200,
                     right: 0,
@@ -111,10 +111,10 @@ describe('text-to-state-machine', () => {
                     out: 'A'
                 }],
                 transitions: [{
-                    goto: 30
+                    goto: 40
                 }]
             }, {
-                state: 30,
+                state: 40,
                 statements: [{
                     left: 'X',
                     right: 1,
@@ -127,9 +127,9 @@ describe('text-to-state-machine', () => {
                         right: 0,
                         operator: '=',
                     },
-                    goto: 0
+                    goto: 10
                 }, {
-                    goto: 30
+                    goto: 40
                 }]
             }]
         };
