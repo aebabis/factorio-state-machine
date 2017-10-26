@@ -33,10 +33,7 @@ export default {
         }).setAlertParameters({
             showAlert: true,
             showOnMap: true,
-            iconSignalId: {
-                type: 'item',
-                name: 'constant_combinator'
-            },
+            icon: 'constant_combinator',
             message: 'State machine hasn\'t been turned on'
         });
         clockCombinator.connect(speaker, 1, 1, 'red');
