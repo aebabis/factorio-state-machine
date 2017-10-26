@@ -46,9 +46,15 @@ A state is a group of statements and transitions that will be run consecutively 
 10:
 ```
 
-A state label must be an integer followed by a colon. A possible degenerate behavior is for
-combinators to operate while a blueprint is being constructed, resulting in unspecified
-behavior. To prevent this, it is recommended that you do not use a `0` state.
+A state label must be an integer followed by a colon.
+
+The constructed blueprint for a state machine will contain a constant combinator
+representing the clock. It is turned off by default to prevent illegal machine states during
+construction in game, and it must be turned on to initially start the machine.
+In order for this feature to work, state values must be positive.
+
+Note that the constant combinator does not comprise a pause feature.
+Turning off the combinator once it is turned on may create an illegal machine state.
 
 In the future, the language may allow alphanumeric labels which are dynamically assigned to integers.
 
