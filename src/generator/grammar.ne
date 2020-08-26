@@ -1,3 +1,36 @@
+@{%
+const moo = require("moo");
+
+const lexer = moo.compile({
+  ws: {match: /[ \t\s\r\n]+/, lineBreaks: true},
+  or: "||",
+  and: "&&",
+  neq: "!=",
+  eq: "==",
+  jmp: "=>",
+  leq: "<=",
+  geq: ">=",
+  lshift: "<<",
+  rshift: ">>",
+  exp: "**",
+  lt: "<",
+  gt: ">",
+  xor: "^",
+  add: "+",
+  sub: "-",
+  not: "!",
+  mul: "*",
+  div: "/",
+  mod: "%",
+  assign: "=",
+  label: ":",
+  integer: /[0-9]+/,
+  id: {match: /[a-zA-Z_]+/, type: moo.keywords({timer: 'timer', reset: 'reset'})},
+});
+%}
+
+@lexer lexer
+
 program
   -> timer:* state:+ _
   {%
@@ -5,7 +38,7 @@ program
   %}
 timer
   -> _ "timer" __ [A-Z] {%
-    (data) => data[3]
+    (data) => data[3].value
   %}
 state
   -> stateLabel statement:* transition:+ {%
@@ -25,20 +58,20 @@ state
     }
   %}
 stateLabel
-  -> _ integer ":" {% (data) => data[1] %}
+  -> _ %integer %label {% (data) => +data[1].value %}
 statement
-  -> _ signal _ "=" _ expression {%
+  -> _ %id _ "=" _ expression {%
     ([, signal, , , , expression]) => {
       if(typeof expression.right !== 'undefined') {
         return Object.assign({}, expression, {
-          out: signal
+          out: signal.value
         });
       } else {
         return {
           left: expression,
           right: 0,
           operator: '+',
-          out: signal
+          out: signal.value
         };
       }
     }
@@ -48,20 +81,20 @@ statement
       left: 0,
       right: 0,
       operator: '+',
-      out: data[3]
+      out: data[3].value
     })
   %}
 transition
-  -> _ expression:? _ "=>" _ integer {%
+  -> _ expression:? _ "=>" _ %integer {%
     ([, condition, , , , goto]) => {
       if(condition != null) {
         return {
-          condition,
-          goto
+          condition: condition,
+          goto: +goto.value
         };
       } else {
         return {
-          goto
+          goto: +goto.value
         };
       }
     }
@@ -91,10 +124,8 @@ unaryExpression -> unaryOperand _ expression {% ([, , left]) => ({left: {left, o
 groupedExpression -> "(" _ expression _ ")" {% (data) => data[2] %}
   | terminalExpression {% ([match]) => match %}
 terminalExpression
-  -> signal {% (data) => data[0] %}
-  | integer {% (data) => data[0] %}
-signal
-  -> [a-zA-Z_]:+ {% (data) => data[0].join('') %}
+  -> %id{% (data) => data[0].value %}
+  | %integer {% (data) => +data[0].value %}
 unaryOperand
   -> "!" {% ([sym]) => sym %}
 orOperand
@@ -104,28 +135,26 @@ andOperand
 xorOperand
   -> "^" {% () => "XOR" %}
 equalityOperand
-  -> "!=" {% ([sym]) => sym %}
+  -> "!=" {% ([sym]) => sym.value %}
   | "==" {% () => "=" %}
 compareOperand
-  -> "<" {% ([sym]) => sym %}
-  | ">" {% ([sym]) => sym %}
-  | "<=" {% ([sym]) => sym %}
-  | ">=" {% ([sym]) => sym %}
+  -> "<" {% ([sym]) => sym.value %}
+  | ">" {% ([sym]) => sym.value %}
+  | "<=" {% ([sym]) => sym.value %}
+  | ">=" {% ([sym]) => sym.value %}
 shiftOperand
-  -> "<<" {% ([sym]) => sym %}
-  | ">>" {% ([sym]) => sym %}
+  -> "<<" {% ([sym]) => sym.value %}
+  | ">>" {% ([sym]) => sym.value %}
 addOperand
-  -> "+" {% ([sym]) => sym %}
-  | "-" {% ([sym]) => sym %}
+  -> "+" {% ([sym]) => sym.value %}
+  | "-" {% ([sym]) => sym.value %}
 multOperand
-  -> "*" {% ([sym]) => sym %}
-  | "/" {% ([sym]) => sym %}
-  | "%" {% ([sym]) => sym %}
+  -> "*" {% ([sym]) => sym.value %}
+  | "/" {% ([sym]) => sym.value %}
+  | "%" {% ([sym]) => sym.value %}
 expOperand
   -> "**" {% () => "^" %}
-integer
-  -> [0-9]:+ {% (data) => +data[0].join('') %}
 _
-  -> [\s\r\n]:* {% () => null %}
+  -> %ws:? {% () => null %}
 __
-  -> [\s\r\n]:+ {% () => null %}
+  -> %ws {% () => null %}

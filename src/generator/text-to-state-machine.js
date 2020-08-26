@@ -1,8 +1,8 @@
 import nearley from 'nearley';
-import Grammar from './grammar.ne';
+import grammar from './grammar.ne';
 
 // import unparse from 'nearley-unparse';
-// console.log("dummy", unparse(Grammar));
+// console.log("dummy", unparse(grammar));
 
 const removeComments = (lines) => {
     return lines
@@ -11,7 +11,7 @@ const removeComments = (lines) => {
 };
 
 export default (code) => {
-    const parser = new nearley.Parser(Grammar.ParserRules, Grammar.ParserStart);
+    const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
     const lines = removeComments(code);
 
     parser.feed(lines);
