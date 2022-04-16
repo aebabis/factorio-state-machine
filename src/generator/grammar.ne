@@ -32,9 +32,11 @@ const lexer = moo.compile({
   labeltag: ":",
   parenthesis: ["(", ")"],
   integer: /-?(?:0|[1-9][0-9]*)/,
-  id: {match: /[a-zA-Z_]+/, type: moo.keywords({timer: 'timer', reset: 'reset'})},
+  id: {match: /[a-zA-Z_]+[a-zA-Z0-9_]*/,
+       type: moo.keywords({timer: 'timer', reset: 'reset'}),
+       value: x => x.startsWith("signal_") ? x.slice(7) : x,
+      }
 });
-
 
 const unarystrip = ([operator, , left]) => ({left: left, operator: operator});
 const idv = (data) => Array.isArray(data) ? idv(id(data)) : data.value;
@@ -54,7 +56,6 @@ state
   {%
     ([state, statements, transitions]) => {
        // If last transition is a conditional jump or no jumps
-	console.log(transitions)
        if(transitions.length === 0 || transitions.slice(-1)[0].condition != null) {
          // Add an unconditional jump to the top of the current state
          transitions = transitions.concat({
@@ -88,7 +89,7 @@ primaryExpression
   |  terminalExpression {% id %}
 
 @{%
-    const unaryOperation = ([op, , expr]) => unary_opmap[op](expr);
+    const unaryOperation = ([op, , expr]) => static_reduce(unary_opmap[op](expr));
     const unary_opmap = {
         '!': (left)  => ({left: {left, operator: '+', right: 1}, operator: '=', right: 1}),
         '-': (right) => ({left: 0, operator: '-', right}),
@@ -204,7 +205,6 @@ resetStatement
 
 @{%
     const static_reduce = (expression) => {
-      console.log("static_reduce: ", expression);
       if (typeof expression !== "object") {
         return expression;
       }
@@ -225,11 +225,6 @@ resetStatement
     }
 
     const assign = (signal, expression) => {
-      console.log("preassign", "signal: ", signal, "exp: ", expression);
-      //expression = static_reduce(expression);
-      //console.log("assign", "signal: ", signal, "exp: ", expression);
-
-
       if(typeof expression.right !== 'undefined') {
         return Object.assign({out: signal}, expression);
       } else {
