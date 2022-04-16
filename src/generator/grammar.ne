@@ -29,14 +29,14 @@ const lexer = moo.compile({
   div: "/",
   mod: "%",
   assign: "=",
-  label: ":",
+  labeltag: ":",
   parenthesis: ["(", ")"],
   integer: /-?(?:0|[1-9][0-9]*)/,
   id: {match: /[a-zA-Z_]+/, type: moo.keywords({timer: 'timer', reset: 'reset'})},
 });
 
+
 const unarystrip = ([operator, , left]) => ({left: left, operator: operator});
-const binarystrip = ([left, , operator, , right]) => ({left:left, operator: operator, right:right});
 const idv = (data) => Array.isArray(data) ? idv(id(data)) : data.value;
 
 %}
@@ -44,23 +44,18 @@ const idv = (data) => Array.isArray(data) ? idv(id(data)) : data.value;
 @lexer lexer
 
 program
-  -> timer:* state:+ _
-  {%
-    ([timers, states]) => ({timers, states})
-  %}
+  -> timer:* state:+ _ {% ([timers, states]) => ({timers, states}) %}
 
 timer
-  -> _ "timer" __ [A-Z]
-  {%
-    (data) => data[3].value
-  %}
+  -> _ "timer" __ [A-Z] {% (data) => data[3].value %}
 
 state
-  -> stateLabel statement:* transition:+
+  -> stateLabel statement:* transition:*
   {%
     ([state, statements, transitions]) => {
-       // If last transition is a conditional jump
-       if(transitions.slice(-1)[0].condition != null) {
+       // If last transition is a conditional jump or no jumps
+	console.log(transitions)
+       if(transitions.length === 0 || transitions.slice(-1)[0].condition != null) {
          // Add an unconditional jump to the top of the current state
          transitions = transitions.concat({
            goto: state
@@ -75,42 +70,41 @@ state
   %}
 
 stateLabel
-  -> _ %integer %label {% (data) => +data[1].value %}
+  -> _ %integer %labeltag {% (data) => +data[1].value %}
 
 statement
   -> assignmentExpression {% id %}
   |  resetStatement {% id %}
 
 transition
-  -> _ basicExpression:? _ "=>" _ %integer {%
-    ([, condition, , , , goto]) => {
-      if(condition != null) {
-        return {
-          condition: condition,
-          goto: +goto.value
-        };
-      } else {
-        return {
-          goto: +goto.value
-        };
-      }
-    }
-  %}
+  -> _ basicExpression:? _ "=>" _ %integer {% ([, condition, , , , goto]) => Object.assign({goto: +goto}, condition !== null ? {condition} : null) %}
 
 terminalExpression
   -> %id {% ([d]) => d.value %}
-  |  %integer {% ([d]) => +d.value %}
+  |  %integer {% ([d]) => +d %}
 
 primaryExpression
   -> "(" _ basicExpression _ ")" {% ([, , exp, , ]) => exp %}
   |  terminalExpression {% id %}
 
 @{%
-    const unaryOperation = ([op, , expr]) => unary_opmap[op](expr, typeof expr === 'number');
+    const unaryOperation = ([op, , expr]) => unary_opmap[op](expr);
     const unary_opmap = {
         '!': (left)  => ({left: {left, operator: '+', right: 1}, operator: '=', right: 1}),
-        '-': (right) => ({left: 0, operator: '-', right})
+        '-': (right) => ({left: 0, operator: '-', right}),
+        '~': (expr) => ({left: expr, operator: "XOR", right: expr})
+    };
+
+    const to_logic = (left) => ({left, operator: '>', right: 0});
+
+    const binary_opmap = {
+        "||": (left, right) => ({left: to_logic(left), right: to_logic(right), operator: 'OR' }),
+        "&&": (left, right) => ({left: to_logic(left), right: to_logic(right), operator: 'AND'})
     }
+
+    const binaryOperation = (expr) => (expr.op in binary_opmap) ? binary_opmap[expr.op](expr.l, expr.r) : expr;
+
+    const binarystrip = ([left, , operator, , right]) => static_reduce(binaryOperation({left, operator, right}));
 
     const static_binary_opmap = {
         '^'  : (l, r) => (l **  r),
@@ -133,7 +127,7 @@ primaryExpression
     }
 %}
 
-unaryOperator -> ("!" | "-") {% idv %}
+unaryOperator -> ("!" | "-" | "~") {% idv %}
 unaryExpression
   -> primaryExpression {% id %}
   |  unaryOperator _ unaryExpression {% unaryOperation %}
@@ -168,25 +162,47 @@ equalityExpression
   -> relationalExpression {% id %}
   |  equalityExpression _ equalityOperator _ relationalExpression {% binarystrip %}
 
-andOperator -> "&" {% () => "AND" %}
-andExpression
+bitAndOperator -> "&" {% () => "AND" %}
+bitAndExpression
   -> equalityExpression {% id %}
-  |  andExpression _ andOperator _ equalityExpression {% binarystrip %}
+  |  bitAndExpression _ bitAndOperator _ equalityExpression {% binarystrip %}
 
-xorOperator -> "^" {% () => "XOR" %}
-xorExpression
-  -> andExpression {% id %}
-  |  xorExpression _ xorOperator _ andExpression {% binarystrip %}
+bitXorOperator -> "^" {% () => "XOR" %}
+bitXorExpression
+  -> bitAndExpression {% id %}
+  |  bitXorExpression _ bitXorOperator _ bitAndExpression {% binarystrip %}
 
-orOperator -> "|" {% () => "OR" %}
-orExpression
-  -> xorExpression {% id %}
-  |  orExpression _ orOperator _ xorExpression {% binarystrip %}
+bitOrOperator -> "|" {% () => "OR" %}
+bitOrExpression
+  -> bitXorExpression {% id %}
+  |  bitOrExpression _ bitOrOperator _ bitXorExpression {% binarystrip %}
 
+logicalAndOperator -> "&&" {% idv %}
+logicalAndExpression
+  -> bitOrExpression {% id %}
+  |  logicalAndExpression _ logicalAndOperator _ bitOrExpression {% binarystrip %}
+
+logicalOrOperator -> "||" {% idv %}
+logicalOrExpression
+  -> logicalAndExpression {% id %}
+  |  logicalOrExpression _ logicalOrOperator _ logicalAndExpression {% binarystrip %}
+
+basicExpression -> logicalOrExpression {% id %}
+
+assignmentExpression
+  -> lhsExpression _ opAssignmentOperator:? "=" _ basicExpression {% op_assign %}
+  | basicExpression {% id %}
+
+opAssignmentOperator
+  -> ("*" | "/" | "%" | "+" | "-" | "<<" | ">>" | "&" | "^" | "|") {% idv %}
+
+lhsExpression
+  -> _ %id _ {% ([ , id, ]) => id.value %}
+
+resetStatement
+  -> _ "reset" __ [A-Z] {% ([ , , ,id]) => assign(id.value, 0) %}
 
 @{%
-    const staticBinaryOperation = ([left, , op, , right]) => static_binary_opmap[op](+left.value, +right.value);
-
     const static_reduce = (expression) => {
       console.log("static_reduce: ", expression);
       if (typeof expression !== "object") {
@@ -203,12 +219,14 @@ orExpression
       }
       return expression;
     }
+
     const op_assign = ([l, ,op, , ,r]) => {
       return (op == null) ? assign(l, r) : assign(l, {left:l, operator:op, right:r});
     }
+
     const assign = (signal, expression) => {
       console.log("preassign", "signal: ", signal, "exp: ", expression);
-      expression = static_reduce(expression);
+      //expression = static_reduce(expression);
       //console.log("assign", "signal: ", signal, "exp: ", expression);
 
 
@@ -225,21 +243,6 @@ orExpression
     }
 %}
 
-
-basicExpression -> orExpression {% id %}
-
-assignmentExpression
-  -> lhsExpression _ opAssignmentOperator:? "=" _ assignmentExpression {% op_assign %}
-  | basicExpression {% id %}
-
-opAssignmentOperator
-  -> ("*" | "/" | "%" | "+" | "-" | "<<" | ">>" | "&" | "^" | "|") {% idv %}
-
-lhsExpression
-  -> _ %id _ {% ([ , id, ]) => id.value %}
-
-resetStatement
-  -> _ "reset" __ [A-Z] {% ([ , , ,id]) => assign(id.value, 0) %}
 _
   -> %ws:? {% () => null %}
 __
