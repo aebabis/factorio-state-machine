@@ -94,6 +94,10 @@ select {
     padding: 5px;
     border-top: solid 1px rgb(47, 49, 41);
     font-family: monospace;
+    line-height: 2.5ex;
+    min-height: 2.5ex;
+    max-height: 20ex;
+    overflow: auto;
 }
 
 option {
