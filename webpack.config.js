@@ -1,20 +1,21 @@
-const webpack = require('webpack');
-const path = require('path');
+import path from 'path';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { URL } from 'url'; // in Browser, the URL in native accessible on window
 
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const __dirname = new URL('.', import.meta.url).pathname;
 
-module.exports = {
+export default {
     entry: [
         './src/index.js',
     ],
     output: {
-        path: path.join(__dirname, '/dist'),
+        path: path.join(__dirname, 'dist'),
         filename: 'bundle.js'
     },
     plugins: [
         new HtmlWebpackPlugin({
             title: 'Factorio State Machine',
-            template: path.join(__dirname, 'src', 'index.html'),
+            template: './src/index.html',
             favicon: './src/favicon.ico'
         }),
         // new webpack.HotModuleReplacementPlugin(),

@@ -1,6 +1,6 @@
-import * as ace from 'brace';
-import 'brace/mode/javascript';
-import 'brace/theme/monokai';
+import ace from 'brace';
+import 'brace/mode/javascript.js';
+import 'brace/theme/monokai.js';
 
 export default (container) => {
     const editor = ace.edit(container.getAttribute('id'));
