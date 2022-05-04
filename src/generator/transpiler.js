@@ -1,7 +1,7 @@
-import textToStateMachine from './text-to-state-machine';
-import stateMachineToIntermediate from './state-machine-to-intermediate';
-import intermediateToCombinators from './intermediate-to-combinators';
-import combinatorsToBlueprint from './combinators-to-blueprint';
+import textToStateMachine from './text-to-state-machine.js';
+import stateMachineToIntermediate from './state-machine-to-intermediate.js';
+import intermediateToCombinators from './intermediate-to-combinators.js';
+import combinatorsToBlueprint from './combinators-to-blueprint.js';
 
 export default (lines, options) => {
     const stateMachine = textToStateMachine(lines, options);

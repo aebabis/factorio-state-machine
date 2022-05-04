@@ -22,18 +22,8 @@ module.exports = {
     ],
     module: {
         rules: [{
-            test: /\.js$/,
-            loader: 'babel-loader',
-            include: [path.resolve(__dirname, 'src')],
-            query: {
-                presets: ['es2015']
-            }
-        }, {
             test: /\.ne$/,
             use: ['nearley-loader']
-        }, {
-            test: /\.css$/,
-            use: ['style-loader', 'css-loader']
         }, {
             test: /\.(png|jpg|ico)$/,
             loader: ['url-loader']

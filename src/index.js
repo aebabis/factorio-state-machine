@@ -1,11 +1,6 @@
-import demos from './demos/demos';
-
-import css from './style.css'; // eslint-disable-line no-unused-vars
-import setupEditor from './editor/main';
-
-import transpiler from './generator/transpiler';
-
-import './favicon.ico';
+import demos from './demos/demos.js';
+import setupEditor from './editor/main.js';
+import transpiler from './generator/transpiler.js';
 
 const textarea = document.querySelector('textarea.output');
 const loader = document.querySelector('select.load');

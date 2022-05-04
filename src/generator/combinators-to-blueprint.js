@@ -1,4 +1,4 @@
-import packingAlgorithms from './packing/packing-algorithms';
+import packingAlgorithms from './packing/packing-algorithms.js';
 
 /**
  * Converts a set combinator representations into a blueprint by selecting

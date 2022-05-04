@@ -1,5 +1,5 @@
 import Blueprint from 'factorio-blueprint';
-import PackingUtil from './util';
+import PackingUtil from './util.js';
 
 const SUBSTATION_SPACING = 16;
 

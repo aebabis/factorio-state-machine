@@ -1,5 +1,5 @@
 import Blueprint from 'factorio-blueprint';
-import PackingUtil from './util';
+import PackingUtil from './util.js';
 
 export default ({clock, signals, timers, states}) => {
     const bp = new Blueprint();
