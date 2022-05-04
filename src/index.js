@@ -1,6 +1,7 @@
 import demos from './demos/demos.js';
 import setupEditor from './editor/main.js';
 import transpiler from './generator/transpiler.js';
+import './style.css';
 
 const textarea = document.querySelector('textarea.output');
 const loader = document.querySelector('select.load');

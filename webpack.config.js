@@ -17,17 +17,15 @@ module.exports = {
             template: path.join(__dirname, 'src', 'index.html'),
             favicon: './src/favicon.ico'
         }),
-        new webpack.HotModuleReplacementPlugin(),
-        new webpack.NoEmitOnErrorsPlugin(),
+        // new webpack.HotModuleReplacementPlugin(),
+        // new webpack.NoEmitOnErrorsPlugin(),
     ],
     module: {
-        rules: [{
-            test: /\.ne$/,
-            use: ['nearley-loader']
-        }, {
-            test: /\.(png|jpg|ico)$/,
-            loader: ['url-loader']
-        }],
+        rules: [
+            { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+            { test: /\.ne$/,  use: 'nearley-loader' },
+            { test: /\.(png|jpg|ico)$/, use: 'url-loader' }
+        ],
     },
 
     resolve: {
