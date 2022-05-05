@@ -1,4 +1,5 @@
-import stateMachineToIntermediate from '../src/generator/state-machine-to-intermediate';
+import '@jest/globals';
+import stateMachineToIntermediate from '../src/generator/state-machine-to-intermediate.js';
 
 describe('state-machine-to-intermediate', () => {
     test('should convert a parse tree of two-state machine to equivalent intermediate form', () => {

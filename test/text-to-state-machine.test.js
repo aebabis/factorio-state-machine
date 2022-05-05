@@ -1,4 +1,5 @@
-import textToStateMachine from '../src/generator/text-to-state-machine';
+import '@jest/globals';
+import textToStateMachine from '../src/generator/text-to-state-machine.js';
 
 describe('text-to-state-machine', () => {
     test('should convert the source code for a 2-state machine to state machine notation', () => {

@@ -1,27 +1,27 @@
 {
   "name": "factorio-state-machine",
   "version": "0.0.0",
-  "description": "",
+  "description": "A programming language for generating control circuits in Factorio",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "install": "npm run build",
+    "install": "npm test && npm run build",
     "build": "webpack",
     "start": "http-server dist",
     "dev": "webpack-dev-server",
-    "test": "nearleyc src/generator/grammar.ne > dist/grammar.js && jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "jest": {
-    "moduleNameMapper": {
-      "\\.(ne)": "<rootDir>/dist/grammar.js"
+    "transform": {
+      "^.+\\.ne$": "jest-transform-nearley"
     }
   },
-  "author": "",
+  "author": "aebabis",
   "license": "MIT",
   "dependencies": {
     "brace": "^0.11.1",
     "css-loader": "^6.7.1",
-    "factorio-blueprint": "https://github.com/demipixel/factorio-blueprint.git#master",
+    "factorio-blueprint": "git+https://github.com/demipixel/factorio-blueprint.git#master",
     "html-webpack-plugin": "^5.5.0",
     "http-server": "^14.1.0",
     "nearley": "^2.10.2",
@@ -32,9 +32,21 @@
   },
   "devDependencies": {
     "eslint": "^4.1.1",
-    "jest": "^20.0.4",
+    "jest": "^28.0.3",
+    "jest-transform-nearley": "^2.0.0",
     "nearley-unparse": "^1.0.1",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.8.1"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aebabis/factorio-state-machine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aebabis/factorio-state-machine/issues"
+  },
+  "homepage": "https://github.com/aebabis/factorio-state-machine#readme"
 }
