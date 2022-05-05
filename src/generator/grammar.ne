@@ -3,157 +3,241 @@ const moo = require("moo");
 
 const lexer = moo.compile({
   ws: {match: /[ \t\s\r\n]+/, lineBreaks: true},
-  or: "||",
-  and: "&&",
+  log_or: "||",
+  log_and: "&&",
+  log_not: "!",
+  bit_or: "|",
+  bit_and: "&",
+  bit_xor: "^",
+  bit_not: "~",
+  bit_or_eq: "|=",
+  bit_and_eq: "&=",
+  bit_xor_eq: "^=",
+  lshift: "<<",
+  rshift: ">>",
   neq: "!=",
   eq: "==",
   jmp: "=>",
   leq: "<=",
   geq: ">=",
-  lshift: "<<",
-  rshift: ">>",
   exp: "**",
   lt: "<",
   gt: ">",
-  xor: "^",
   add: "+",
   sub: "-",
-  not: "!",
   mul: "*",
   div: "/",
   mod: "%",
   assign: "=",
-  label: ":",
-  integer: /[0-9]+/,
-  id: {match: /[a-zA-Z_]+/, type: moo.keywords({timer: 'timer', reset: 'reset'})},
+  labeltag: ":",
+  parenthesis: ["(", ")"],
+  integer: /-?(?:0|[1-9][0-9]*)/,
+  id: {match: /[a-zA-Z_]+[a-zA-Z0-9_]*/,
+       type: moo.keywords({timer: 'timer', reset: 'reset'}),
+       value: x => x.startsWith("signal_") ? x.slice(7) : x,
+      }
 });
+
+const unarystrip = ([operator, , left]) => ({left: left, operator: operator});
+const idv = (data) => Array.isArray(data) ? idv(id(data)) : data.value;
+
 %}
 
 @lexer lexer
 
 program
-  -> timer:* state:+ _
-  {%
-    ([timers, states]) => ({timers, states})
-  %}
+  -> timer:* state:+ _ {% ([timers, states]) => ({timers, states}) %}
+
 timer
-  -> _ "timer" __ [A-Z] {%
-    (data) => data[3].value
-  %}
+  -> _ "timer" __ [A-Z] {% (data) => data[3].value %}
+
 state
-  -> stateLabel statement:* transition:+ {%
+  -> stateLabel statement:* transition:*
+  {%
     ([state, statements, transitions]) => {
-      // If last transition is a conditional jump
-      if(transitions.slice(-1)[0].condition != null) {
-        // Add an unconditional jump to the top of the current state
-        transitions = transitions.concat({
-          goto: state
-        });
-      }
-      return {
-        state,
-        statements,
-        transitions
-      };
-    }
+       // If last transition is a conditional jump or no jumps
+       if(transitions.length === 0 || transitions.slice(-1)[0].condition != null) {
+         // Add an unconditional jump to the top of the current state
+         transitions = transitions.concat({
+           goto: state
+         });
+       }
+       return {
+         state,
+         statements,
+         transitions
+       };
+     }
   %}
+
 stateLabel
-  -> _ %integer %label {% (data) => +data[1].value %}
+  -> _ %integer %labeltag {% (data) => +data[1].value %}
+
 statement
-  -> _ %id _ "=" _ expression {%
-    ([, signal, , , , expression]) => {
+  -> assignmentExpression {% id %}
+  |  resetStatement {% id %}
+
+transition
+  -> _ basicExpression:? _ "=>" _ %integer {% ([, condition, , , , goto]) => Object.assign({goto: +goto}, condition !== null ? {condition} : null) %}
+
+terminalExpression
+  -> %id {% ([d]) => d.value %}
+  |  %integer {% ([d]) => +d %}
+
+primaryExpression
+  -> "(" _ basicExpression _ ")" {% ([, , exp, , ]) => exp %}
+  |  terminalExpression {% id %}
+
+@{%
+    const unaryOperation = ([op, , expr]) => static_reduce(unary_opmap[op](expr));
+    const unary_opmap = {
+        '!': (left)  => ({left: {left, operator: '+', right: 1}, operator: '=', right: 1}),
+        '-': (right) => ({left: 0, operator: '-', right}),
+        '~': (expr) => ({left: expr, operator: "XOR", right: expr})
+    };
+
+    const to_logic = (left) => ({left, operator: '>', right: 0});
+
+    const binary_opmap = {
+        "||": (left, right) => ({left: to_logic(left), right: to_logic(right), operator: 'OR' }),
+        "&&": (left, right) => ({left: to_logic(left), right: to_logic(right), operator: 'AND'})
+    }
+
+    const binaryOperation = (expr) => (expr.op in binary_opmap) ? binary_opmap[expr.op](expr.l, expr.r) : expr;
+
+    const binarystrip = ([left, , operator, , right]) => static_reduce(binaryOperation({left, operator, right}));
+
+    const static_binary_opmap = {
+        '^'  : (l, r) => (l **  r),
+        '*'  : (l, r) => (l  *  r),
+        '/'  : (l, r) => (l  /  r),
+        '%'  : (l, r) => (l  %  r),
+        '+'  : (l, r) => (l  +  r),
+        '-'  : (l, r) => (l  -  r),
+        '<<' : (l, r) => (l <<  r),
+        '>>' : (l, r) => (l >>  r),
+        '<'  : (l, r) => (l  <  r),
+        '>'  : (l, r) => (l  >  r),
+        '<=' : (l, r) => (l <=  r),
+        '>=' : (l, r) => (l >=  r),
+        '!=' : (l, r) => (l !=  r),
+        '='  : (l, r) => (l === r),
+        'AND': (l, r) => (l  &  r),
+        'XOR': (l, r) => (l  ^  r),
+        'OR' : (l, r) => (l  |  r)
+    }
+%}
+
+unaryOperator -> ("!" | "-" | "~") {% idv %}
+unaryExpression
+  -> primaryExpression {% id %}
+  |  unaryOperator _ unaryExpression {% unaryOperation %}
+
+exponentiationOperator -> "**" {% () => "^" %}
+exponentiationExpression
+  -> unaryExpression {% id %}
+  |  exponentiationExpression _ exponentiationOperator _ unaryExpression {% binarystrip %}
+
+multiplicativeOperator -> ("*" | "/" | "%") {% idv %}
+multiplicativeExpression
+  -> exponentiationExpression {% id %}
+  |  multiplicativeExpression _ multiplicativeOperator _ exponentiationExpression {% binarystrip %}
+
+additiveOperator -> ("+" | "-") {% idv %}
+additiveExpression
+  -> multiplicativeExpression {% id %}
+  |  additiveExpression _ additiveOperator _ multiplicativeExpression {% binarystrip %}
+
+shiftOperator -> ("<<" | ">>") {% idv %}
+shiftExpression
+  -> additiveExpression  {% id %}
+  |  shiftExpression _ shiftOperator _ additiveExpression {% binarystrip %}
+
+relationalOperator -> ("<" | ">" | "<=" | ">=") {% idv %}
+relationalExpression
+  -> shiftExpression {% id %}
+  |  relationalExpression _ relationalOperator _ shiftExpression {% binarystrip %}
+
+equalityOperator -> "!=" {% idv %} | "==" {% () => "=" %}
+equalityExpression
+  -> relationalExpression {% id %}
+  |  equalityExpression _ equalityOperator _ relationalExpression {% binarystrip %}
+
+bitAndOperator -> "&" {% () => "AND" %}
+bitAndExpression
+  -> equalityExpression {% id %}
+  |  bitAndExpression _ bitAndOperator _ equalityExpression {% binarystrip %}
+
+bitXorOperator -> "^" {% () => "XOR" %}
+bitXorExpression
+  -> bitAndExpression {% id %}
+  |  bitXorExpression _ bitXorOperator _ bitAndExpression {% binarystrip %}
+
+bitOrOperator -> "|" {% () => "OR" %}
+bitOrExpression
+  -> bitXorExpression {% id %}
+  |  bitOrExpression _ bitOrOperator _ bitXorExpression {% binarystrip %}
+
+logicalAndOperator -> "&&" {% idv %}
+logicalAndExpression
+  -> bitOrExpression {% id %}
+  |  logicalAndExpression _ logicalAndOperator _ bitOrExpression {% binarystrip %}
+
+logicalOrOperator -> "||" {% idv %}
+logicalOrExpression
+  -> logicalAndExpression {% id %}
+  |  logicalOrExpression _ logicalOrOperator _ logicalAndExpression {% binarystrip %}
+
+basicExpression -> logicalOrExpression {% id %}
+
+assignmentExpression
+  -> lhsExpression _ opAssignmentOperator:? "=" _ basicExpression {% op_assign %}
+  | basicExpression {% id %}
+
+opAssignmentOperator
+  -> ("*" | "/" | "%" | "+" | "-" | "<<" | ">>" | "&" | "^" | "|") {% idv %}
+
+lhsExpression
+  -> _ %id _ {% ([ , id, ]) => id.value %}
+
+resetStatement
+  -> _ "reset" __ [A-Z] {% ([ , , ,id]) => assign(id.value, 0) %}
+
+@{%
+    const static_reduce = (expression) => {
+      if (typeof expression !== "object") {
+        return expression;
+      }
+      if(typeof expression.left === "object"){
+        expression.left = static_reduce(expression.left);
+      }
+      if(typeof expression.right === "object"){
+        expression.right = static_reduce(expression.right );
+      }
+      if(typeof expression.left === typeof expression.right && typeof expression.left === "number"){
+        expression = +static_binary_opmap[expression.operator](expression.left, expression.right);
+      }
+      return expression;
+    }
+
+    const op_assign = ([l, ,op, , ,r]) => {
+      return (op == null) ? assign(l, r) : assign(l, {left:l, operator:op, right:r});
+    }
+
+    const assign = (signal, expression) => {
       if(typeof expression.right !== 'undefined') {
-        return Object.assign({}, expression, {
-          out: signal.value
-        });
+        return Object.assign({out: signal}, expression);
       } else {
         return {
           left: expression,
           right: 0,
           operator: '+',
-          out: signal.value
+          out: signal
         };
       }
     }
-  %}
-  | _ "reset" __ [A-Z] {%
-    (data) => ({
-      left: 0,
-      right: 0,
-      operator: '+',
-      out: data[3].value
-    })
-  %}
-transition
-  -> _ expression:? _ "=>" _ %integer {%
-    ([, condition, , , , goto]) => {
-      if(condition != null) {
-        return {
-          condition: condition,
-          goto: +goto.value
-        };
-      } else {
-        return {
-          goto: +goto.value
-        };
-      }
-    }
-  %}
-expression
-  -> orExpression {% ([expression]) => expression %}
-orExpression -> orExpression _ orOperand _ andExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | andExpression {% ([match]) => match %}
-andExpression -> andExpression _ andOperand _ xorExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | xorExpression {% ([match]) => match %}
-xorExpression -> xorExpression _ xorOperand _ equalityExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | equalityExpression {% ([match]) => match %}
-equalityExpression -> equalityExpression _ equalityOperand _ compareExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | compareExpression {% ([match]) => match %}
-compareExpression -> compareExpression _ compareOperand _ shiftExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | shiftExpression {% ([match]) => match %}
-shiftExpression -> shiftExpression _ shiftOperand _ addExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | addExpression {% ([match]) => match %}
-addExpression -> addExpression _ addOperand _ multExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | multExpression {% ([match]) => match %}
-multExpression -> multExpression _ multOperand _ expExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | expExpression {% ([match]) => match %}
-expExpression -> unaryExpression _ expOperand _ expExpression {% ([left, , operator, , right]) => ({left, operator, right}) %}
-  | unaryExpression {% ([match]) => match %}
-unaryExpression -> unaryOperand _ expression {% ([, , left]) => ({left: {left, operator: '+', right: 1}, operator: '=', right: 1}) %}
-  | groupedExpression {% ([match]) => match %}
-groupedExpression -> "(" _ expression _ ")" {% (data) => data[2] %}
-  | terminalExpression {% ([match]) => match %}
-terminalExpression
-  -> %id{% (data) => data[0].value %}
-  | %integer {% (data) => +data[0].value %}
-unaryOperand
-  -> "!" {% ([sym]) => sym %}
-orOperand
-  -> "||" {% () => "OR" %}
-andOperand
-  -> "&&" {% () => "AND" %}
-xorOperand
-  -> "^" {% () => "XOR" %}
-equalityOperand
-  -> "!=" {% ([sym]) => sym.value %}
-  | "==" {% () => "=" %}
-compareOperand
-  -> "<" {% ([sym]) => sym.value %}
-  | ">" {% ([sym]) => sym.value %}
-  | "<=" {% ([sym]) => sym.value %}
-  | ">=" {% ([sym]) => sym.value %}
-shiftOperand
-  -> "<<" {% ([sym]) => sym.value %}
-  | ">>" {% ([sym]) => sym.value %}
-addOperand
-  -> "+" {% ([sym]) => sym.value %}
-  | "-" {% ([sym]) => sym.value %}
-multOperand
-  -> "*" {% ([sym]) => sym.value %}
-  | "/" {% ([sym]) => sym.value %}
-  | "%" {% ([sym]) => sym.value %}
-expOperand
-  -> "**" {% () => "^" %}
+%}
+
 _
   -> %ws:? {% () => null %}
 __
