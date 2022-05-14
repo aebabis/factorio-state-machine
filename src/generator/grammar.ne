@@ -125,6 +125,7 @@ groupedExpression -> "(" _ expression _ ")" {% (data) => data[2] %}
   | terminalExpression {% ([match]) => match %}
 terminalExpression
   -> %id{% (data) => data[0].value %}
+  | %sub %integer {% (data) => -data[1].value %}
   | %integer {% (data) => +data[0].value %}
 unaryOperand
   -> "!" {% ([sym]) => sym %}
