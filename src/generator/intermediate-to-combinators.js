@@ -7,32 +7,25 @@
 const createSymbolLookup = (states) => {
     // The symbol set is the names of variables 
     // const symbolSet = {};
-    const signalSet = {};
+    const signals = new Set();
 
-    states.forEach(({statements}) => {
-        statements.forEach(({operations}) => {
-            operations.forEach(group => {
-                group.forEach(({left, right, out}) => {
-                    [left, right, out].filter(Boolean).forEach(sym => {
-                        if(typeof sym === 'string' && sym.match(/^signal/)) {
-                            signalSet[sym] = true;
-                        }
-                    });
-                });
-            });
-        });
-    });
+    for (const state of states)
+        for (const statement of state.statements)
+            for (const group of statement.operations)
+                for (const step of group)
+                    if (typeof step.out === 'string' && step.out.match(/^signal/))
+                        signals.add(step.out);
 
     const availableSymbols = new Array(26).fill(0)
         .map((u, i) => 'signal_' + String.fromCharCode(i + 65))
-        .filter(signal => !(signal in signalSet));
+        .filter(signal => !signals.has(signal));
 
     // Try to use signal_S for the state variable if available; otherwise use the last available element
     const stateSignal = availableSymbols.splice(availableSymbols.indexOf('signal_S'), 1)[0];
 
     return {
         stateSignal,
-        signalList: Object.keys(signalSet).concat(stateSignal),
+        signalList: [...signals, stateSignal],
         getSymbol: (varName) => {
             if(typeof varName === 'number') {
                 return varName;
