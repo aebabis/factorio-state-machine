@@ -1,21 +1,38 @@
 import Blueprint from 'factorio-blueprint';
 import PackingUtil from './util.js';
 
-const SUBSTATION_SPACING = 16;
+const POWER_POLES = {
+    'small_electric_pole': {
+        size: 1,
+        range: 2,
+        spacing: 6,
+    },
+    'medium_electric_pole': {
+        size: 1,
+        range: 3,
+        spacing: 8,
+    },
+    'substation': {
+        size: 2,
+        range: 4,
+        spacing: 16,
+    },
+};
 
 // TODO: Make this a generator when you transpile
-function ltrCoordGenerator(startY = -4) {
-    let x = -4;
+function ltrCoordGenerator(pole_info, startY = -pole_info.range) {
+    let x = 2 * Math.floor(-pole_info.range/2);
     let y = startY;
 
     return {
         next: () => {
             const coords = { x, y };
             x += 2;
-            if(x === 0 && (y % SUBSTATION_SPACING === 0 || y % SUBSTATION_SPACING === 1)) {
+            const rowOffset = y % pole_info.spacing;
+            if (x === 0 && rowOffset >= 0 && rowOffset < pole_info.size) {
                 x += 2;
-            } else if(x > 4) {
-                x = -4;
+            } else if (x > pole_info.range) {
+                x = 2 * Math.floor(-pole_info.range/2);
                 y++;
             }
             return {
@@ -29,8 +46,11 @@ function ltrCoordGenerator(startY = -4) {
  * Packing algorithm that attempts to fit combinators
  * into a neat rectangle around substations.
  */
-export default ({clock, signals, timers, states}) => {
+export default ({clock, signals, timers, states}, options={}) => {
     const bp = new Blueprint();
+
+    const { pole_type='small_electric_pole' } = options;
+    const pole_info = POWER_POLES[pole_type];
 
     // Recursively count combinators in an array
     const countCombinators = (item) => {
@@ -51,39 +71,42 @@ export default ({clock, signals, timers, states}) => {
     // Attempt to balance combinators around first
     // power pole so that small machines don't have
     // gaps
+    const combPerRow = pole_info.spacing / 2;
+    const inMiddleRow = combPerRow * pole_info.size;
+    const inTopHalf = (combinatorCount - inMiddleRow) / 2;
     let startY = Math.max(
-        -7,
-        -Math.ceil((combinatorCount - 8) / 10)
+        -combPerRow + 1,
+        -Math.ceil(inTopHalf / pole_info.spacing)
     );
 
     // Generate a sequence of coords
-    const coordGenerator = ltrCoordGenerator(startY);
+    const coordGenerator = ltrCoordGenerator(pole_info, startY);
 
-    // Gets a substation at the given coords, making
-    // it if necessary
+    // Gets the power pole/substation at the given coords,
+    // creating it if necessary
     const getPoleAt = (coords, canCreate = true) => {
         const {x, y} = coords;
         let pole = bp.findEntity(coords);
         if(!pole && canCreate) {
-            pole = bp.createEntity('substation', coords);
+            pole = bp.createEntity(pole_type, coords);
             const neighbors = [
-                getPoleAt({x: x - SUBSTATION_SPACING , y: y}, false),
-                getPoleAt({x: x + SUBSTATION_SPACING, y: y}, false),
-                getPoleAt({x: x, y: y - SUBSTATION_SPACING}, false),
-                getPoleAt({x: x, y: y + SUBSTATION_SPACING}, false)
+                getPoleAt({x: x - pole_info.spacing , y: y}, false),
+                getPoleAt({x: x + pole_info.spacing, y: y}, false),
+                getPoleAt({x: x, y: y - pole_info.spacing}, false),
+                getPoleAt({x: x, y: y + pole_info.spacing}, false)
             ].filter(Boolean);
             neighbors.forEach(neighbor => pole.connect(neighbor, 0, 0, 'red'));
         }
         return pole || null;
     };
 
-    // Gets the substation that will power the entity
+    // Gets the power pole or substation that will power the entity
     // based on its coords
     const getNearestPole = (entity) => {
         const {x, y} = entity.position;
         return getPoleAt({
-            x: Math.round(x / SUBSTATION_SPACING) * SUBSTATION_SPACING,
-            y: Math.round(y / SUBSTATION_SPACING) * SUBSTATION_SPACING
+            x: Math.round(x / pole_info.spacing) * pole_info.spacing,
+            y: Math.round(y / pole_info.spacing) * pole_info.spacing
         });
     };
 
@@ -104,7 +127,9 @@ export default ({clock, signals, timers, states}) => {
     };
 
     // Place combinators
-    const clockCoords = coordGenerator.next().value;
+    let clockCoords = coordGenerator.next().value;
+    if (pole_type === 'medium_electric_pole')
+        clockCoords = coordGenerator.next().value;
     const clockCombinator = getCombinator(bp, clock, clockCoords);
     clockCombinator.setConstant(0, clock.signal, 1);
     clockCombinator.constantEnabled = false;

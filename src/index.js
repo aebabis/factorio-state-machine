@@ -5,18 +5,19 @@ import './style.css';
 
 const textarea = document.querySelector('textarea.output');
 const loader = document.querySelector('select.load');
+const pole = document.querySelector('select.pole');
 const packingAlgorithm = document.querySelector('select.packing');
 const editorContainer = document.querySelector('#editor');
 const compilerErrorContainer = document.querySelector('.compiler-error');
 
 const editor = setupEditor(editorContainer);
 
-let pack = true;
-
 const compileText = () => {
     const code = editor.getValue();
     try {
-        textarea.textContent = transpiler(code, {pack: pack}).encode();
+        const pack = packingAlgorithm.value === 'compact';
+        const pole_type = pole.value;
+        textarea.textContent = transpiler(code, { pack, pole_type }).encode();
         compilerErrorContainer.innerHTML = '&nbsp';
     } catch(e) {
         console.error(e);
@@ -32,24 +33,22 @@ editor.on('change', () => {
 
 const updateSelect = () => loader.setAttribute('selection', loader.value);
 
-Object.keys(demos).forEach(name => {
+for (const demo of Object.keys(demos)) {
     const option = document.createElement('option');
-    option.textContent = name;
+    option.textContent = demo;
     loader.appendChild(option);
+}
 
-    loader.addEventListener('change', event => {
-        const key = event.target.value;
-        editor.setValue(demos[key]());
-        editor.clearSelection();
-        compileText();
-        updateSelect();
-    });
-});
-
-packingAlgorithm.addEventListener('change', event => {
-    pack = event.target.value === 'compact';
+loader.addEventListener('change', (event) => {
+    const key = event.target.value;
+    editor.setValue(demos[key]());
+    editor.clearSelection();
     compileText();
+    updateSelect();
 });
+
+packingAlgorithm.addEventListener('change', compileText);
+pole.addEventListener('change', compileText);
 
 updateSelect();
 
