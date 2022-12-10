@@ -5,12 +5,12 @@ const POWER_POLES = {
     'small_electric_pole': {
         size: 1,
         range: 2,
-        spacing: 6,
+        spacing: 5,
     },
     'medium_electric_pole': {
         size: 1,
         range: 3,
-        spacing: 8,
+        spacing: 7,
     },
     'substation': {
         size: 2,
