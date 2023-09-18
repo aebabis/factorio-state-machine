@@ -36,6 +36,13 @@ export default (code) => {
         });
     });
 
+    // Require state numbers to be positive
+    states.forEach(({state}) => {
+        if(state <= 0) {
+            throw new Error(`State ${state} is not a positive number. State values must be postive in order to prevent non-determinism during blueprint construction`);
+        }
+    });
+
     // Check transitions to ensure they only go to states which exist
     states.forEach(({state, transitions}) => {
         transitions.forEach(({goto}) => {
