@@ -181,4 +181,57 @@ describe('text-to-state-machine', () => {
 
         expect(result).toEqual(expected);
     });
+
+    test('should convert the source code for a 2-state machine with named labels to state machine notation', () => {
+        const source =
+            'start:\n' +
+            '    X = X + 1\n' +
+            '    X % 3 == 0 => end\n' +
+            '    => start\n' +
+            'end:\n' +
+            '    Y = Y + 1\n' +
+            '    => start\n';
+
+        const expected = {
+            timers: [],
+            states: [{
+                state: "start",
+                statements: [{
+                    left: 'X',
+                    right: 1,
+                    operator: '+',
+                    out: 'X'
+                }],
+                transitions: [{
+                    condition: {
+                        left: {
+                            left: 'X',
+                            right: 3,
+                            operator: '%'
+                        },
+                        right: 0,
+                        operator: '=',
+                    },
+                    goto: "end"
+                }, {
+                    goto: "start"
+                }]
+            }, {
+                state: "end",
+                statements: [{
+                    left: 'Y',
+                    right: 1,
+                    operator: '+',
+                    out: 'Y'
+                }],
+                transitions: [{
+                    goto: "start"
+                }]
+            }]
+        };
+
+        const result = textToStateMachine(source);
+
+        expect(result).toEqual(expected);
+    });
 });
