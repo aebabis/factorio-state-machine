@@ -18,13 +18,22 @@ export default (code) => {
     const {results} = parser;
     const [result] = results;
 
-    const {states} = result;
+    const {states, timers} = result;
 
-    // Require state numbers to be positive
-    states.forEach(({state}) => {
-        if(state <= 0) {
-            throw new Error(`State ${state} is not a positive number. State values must be postive in order to prevent non-determinism during blueprint construction`);
+    // Convert all integer states to int
+    states.forEach(({state}, index) => {
+        if(!isNaN(state)) {
+            states[index].state = parseInt(state);
         }
+    });
+
+    // Convert all integer transitions to int
+    states.forEach(({transitions}, stateIndex) => {
+        transitions.forEach(({goto}, transitionIndex) => {
+            if(!isNaN(goto)) {
+                states[stateIndex].transitions[transitionIndex].goto = parseInt(goto);
+            }
+        });
     });
 
     // Check transitions to ensure they only go to states which exist
@@ -36,5 +45,5 @@ export default (code) => {
         });
     });
 
-    return result;
+    return {states, timers};
 };

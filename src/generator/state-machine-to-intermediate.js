@@ -154,18 +154,37 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
     }
 };
 
+// Helper function to generate next available numeric label
+function generateNextLabel(states) {
+    let max = 0;
+    states.forEach(({state, statements}) => {
+        if(typeof state === 'number') {
+            const end = statements
+                .map(({start, operations}) => start + operations.length)
+                .reduce((a, b) => Math.max(a, b), 0); // Last statement is always a branch, so no need to check past end
+            if(end > max) {
+                max = end + 1;
+            }
+        }
+    });
+    return Math.ceil(max / 10) * 10; // Round to the nex multiple of 10
+}
+
 /**
  * Converts the basic form of the parsed state machine
  * into an intermediate form that's easier to make
  * into a blueprint
  */
 export default ({timers, states}) => {
+    // Map of string labels to numeric labels
+    const labelMap = {};
+
     states = states.map(({state, statements, transitions}) => {
         // TODO: Parallelize statements that can be run in parallel
         // TODO: Perform tree rotations for statements with commutativity?
         // If it's addition, it can be all run in a single tick. If it's
         // multiplication, then it can't
-        let substate = state;
+        let substate = typeof state === 'number' ? state : 0;
         const intermediateStatements = statements.map(statement => {
             const operations = getIntermediateFormOf(statement);
             const start = substate;
@@ -223,6 +242,36 @@ export default ({timers, states}) => {
             state,
             statements: intermediateStatements.concat(intermediateBranches)
         };
+    });
+
+    // Generate numeric labels for each label name
+    states.forEach(({state, statements}, index) => {
+        // Generate numeric label if string
+        if(typeof state === 'string') {
+            if(!labelMap[state]) {
+                const start = generateNextLabel(states);
+                labelMap[state] = start;
+                statements = statements.map((statement) => ({
+                    ...statement,
+                    start: statement.start + start,
+                }));
+            }
+            states[index].state = labelMap[state];
+            states[index].statements = statements;
+        }
+    });
+
+    // Update the goto with the new states
+    states.forEach(({statements}, stateIndex) => {
+        statements.forEach(({operations}, statementIndex) => {
+            operations.forEach((operation, operationIndex) => {
+                operation.forEach(({goto}, index) => {
+                    if(typeof goto === 'string') {
+                        states[stateIndex].statements[statementIndex].operations[operationIndex][index].goto = labelMap[goto];
+                    }
+                });
+            });
+        });
     });
 
     // Since each statement group in the statement group array has time

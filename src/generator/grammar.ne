@@ -58,7 +58,7 @@ state
     }
   %}
 stateLabel
-  -> _ %integer %label {% (data) => +data[1].value %}
+  -> _ (%integer | %id) %label {% (data) => data[1][0].value %}
 statement
   -> _ %id _ "=" _ expression {%
     ([, signal, , , , expression]) => {
@@ -85,16 +85,16 @@ statement
     })
   %}
 transition
-  -> _ expression:? _ "=>" _ %integer {%
+  -> _ expression:? _ "=>" _ (%integer | %id) {%
     ([, condition, , , , goto]) => {
       if(condition != null) {
         return {
           condition: condition,
-          goto: +goto.value
+          goto: goto[0].value
         };
       } else {
         return {
-          goto: +goto.value
+          goto: goto[0].value
         };
       }
     }
