@@ -25,8 +25,7 @@ const lexer = moo.compile({
   assign: "=",
   label: ":",
   integer: /[0-9]+/,
-  id: {match: /[a-zA-Z_]+/, type: moo.keywords({timer: 'timer', reset: 'reset'})},
-  string: /[a-zA-Z][a-zA-Z_0-9]*/,
+  id: {match: /[a-zA-Z][a-zA-Z_0-9]*/, type: moo.keywords({timer: 'timer', reset: 'reset'})},
 });
 %}
 
@@ -59,7 +58,7 @@ state
     }
   %}
 stateLabel
-  -> _ (%integer | %id | %string) %label {% (data) => data[1][0].value %}
+  -> _ (%integer | %id) %label {% (data) => data[1][0].value %}
 statement
   -> _ %id _ "=" _ expression {%
     ([, signal, , , , expression]) => {
@@ -86,7 +85,7 @@ statement
     })
   %}
 transition
-  -> _ expression:? _ "=>" _ (%integer | %id | %string) {%
+  -> _ expression:? _ "=>" _ (%integer | %id) {%
     ([, condition, , , , goto]) => {
       if(condition != null) {
         return {
