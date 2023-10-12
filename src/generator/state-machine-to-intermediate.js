@@ -154,20 +154,34 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
     }
 };
 
-// Helper function to generate next available numeric label
-function generateNextLabel(states) {
-    let max = 0;
-    states.forEach(({state, statements}) => {
-        if(typeof state === 'number') {
-            const end = statements
-                .map(({start, operations}) => start + operations.length)
-                .reduce((a, b) => Math.max(a, b), 0); // Last statement is always a branch, so no need to check past end
-            if(end > max) {
-                max = end + 1;
-            }
-        }
-    });
-    return Math.ceil(max / 10) * 10; // Round to the nex multiple of 10
+// Helper function to generate next available numeric
+// let numericStateEnd;
+// function generateNextLabel(state, states) {
+//     if (!numericStateEnd) {
+//         numericStateEnd = endOfLastNumericState(states);
+//     }
+//
+//     const ends = state.statements.map(s => s.start + s.operations.length);
+//     return numericStateEnd
+// }
+
+//Placeholder function for now
+function generateNextLabel(state, states) {
+    return endOfLastNumericState(states);
+}
+
+function getMaxRounded(ends) {
+    let end = Math.max(...ends) + 1;
+    end = Math.max(end, 0); // prevent -infinity when ends is empty
+    return Math.ceil(end / 10) * 10; // Round to the nex multiple of 10
+}
+
+function endOfLastNumericState(states) {
+    const ends = states
+        .filter(({state}) => typeof state === 'number')
+        .map(({statements}) => statements.map(s => s.start + s.operations.length))
+        .flat();
+    return getMaxRounded(ends);
 }
 
 /**
@@ -249,7 +263,7 @@ export default ({timers, states}) => {
         // Generate numeric label if string
         if(typeof state === 'string') {
             if(!labelMap[state]) {
-                const start = generateNextLabel(states);
+                const start = generateNextLabel(state, states);
                 labelMap[state] = start;
                 statements = statements.map((statement) => ({
                     ...statement,
@@ -262,17 +276,12 @@ export default ({timers, states}) => {
     });
 
     // Update the goto with the new states
-    states.forEach(({statements}, stateIndex) => {
-        statements.forEach(({operations}, statementIndex) => {
-            operations.forEach((operation, operationIndex) => {
-                operation.forEach(({goto}, index) => {
-                    if(typeof goto === 'string') {
-                        states[stateIndex].statements[statementIndex].operations[operationIndex][index].goto = labelMap[goto];
-                    }
-                });
-            });
-        });
-    });
+    for (const {statements} of states)
+        for (const {operations} of statements)
+            for (const operation of operations)
+                for (const op of operation)
+                    if(typeof op.goto === 'string')
+                        op.goto = labelMap[op.goto];
 
     // Since each statement group in the statement group array has time
     // given by (state + offset), we can determine the instruction-pointer-time
