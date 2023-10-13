@@ -154,18 +154,44 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
     }
 };
 
+// Helper function to generate next available numeric
+let numericStateEnd;
+function generateNextLabel(state, states) {
+    if (numericStateEnd === undefined) {
+        numericStateEnd = endOfLastNumericState(states);
+    }
+
+    const ends = state.statements.map(s => s.start + s.operations.length);
+    let end = Math.max(0, Math.max(...ends) + 1);
+    let tmp = numericStateEnd;
+    numericStateEnd = numericStateEnd + end;
+    return tmp;
+}
+
+function endOfLastNumericState(states) {
+    const ends = states
+        .filter(({state}) => typeof state === 'number')
+        .map(({statements}) => statements.map(s => s.start + s.operations.length))
+        .flat();
+    return Math.max(0, Math.max(...ends) + 1);
+}
+
 /**
  * Converts the basic form of the parsed state machine
  * into an intermediate form that's easier to make
  * into a blueprint
  */
 export default ({timers, states}) => {
+    numericStateEnd = undefined;
+    // Map of string labels to numeric labels
+    const labelMap = {};
+
     states = states.map(({state, statements, transitions}) => {
         // TODO: Parallelize statements that can be run in parallel
         // TODO: Perform tree rotations for statements with commutativity?
         // If it's addition, it can be all run in a single tick. If it's
         // multiplication, then it can't
-        let substate = state;
+        let substate = typeof state === 'number' ? state : 0;
         const intermediateStatements = statements.map(statement => {
             const operations = getIntermediateFormOf(statement);
             const start = substate;
@@ -224,6 +250,32 @@ export default ({timers, states}) => {
             statements: intermediateStatements.concat(intermediateBranches)
         };
     });
+
+    // Generate numeric labels for each label name
+    states.forEach((currentstate, index) => {
+        let {state, statements} = currentstate;
+        // Generate numeric label if string
+        if(typeof state === 'string') {
+            if(!labelMap[state]) {
+                const start = generateNextLabel(currentstate, states);
+                labelMap[state] = start;
+                statements = statements.map((statement) => ({
+                    ...statement,
+                    start: statement.start + start,
+                }));
+            }
+            states[index].state = labelMap[state];
+            states[index].statements = statements;
+        }
+    });
+
+    // Update the goto with the new states
+    for (const {statements} of states)
+        for (const {operations} of statements)
+            for (const operation of operations)
+                for (const op of operation)
+                    if(typeof op.goto === 'string')
+                        op.goto = labelMap[op.goto];
 
     // Since each statement group in the statement group array has time
     // given by (state + offset), we can determine the instruction-pointer-time
