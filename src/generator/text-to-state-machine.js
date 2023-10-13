@@ -20,22 +20,6 @@ export default (code) => {
 
     const {states, timers} = result;
 
-    // Convert all integer states to int
-    states.forEach(({state}, index) => {
-        if(!isNaN(state)) {
-            states[index].state = parseInt(state);
-        }
-    });
-
-    // Convert all integer transitions to int
-    states.forEach(({transitions}, stateIndex) => {
-        transitions.forEach(({goto}, transitionIndex) => {
-            if(!isNaN(goto)) {
-                states[stateIndex].transitions[transitionIndex].goto = parseInt(goto);
-            }
-        });
-    });
-
     // Require state numbers to be positive
     states.forEach(({state}) => {
         if(state <= 0) {
