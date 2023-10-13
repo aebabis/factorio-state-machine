@@ -58,7 +58,8 @@ state
     }
   %}
 stateLabel
-  -> _ (%integer | %id) %label {% (data) => data[1][0].value %}
+  -> _ %integer %label {% (data) => +data[1].value %}
+  |  _ (%id) %label {% (data) => data[1][0].value %}
 statement
   -> _ %id _ "=" _ expression {%
     ([, signal, , , , expression]) => {
@@ -90,11 +91,11 @@ transition
       if(condition != null) {
         return {
           condition: condition,
-          goto: goto[0].value
+          goto: !isNaN(+goto) ? +goto : goto[0].value
         };
       } else {
         return {
-          goto: goto[0].value
+          goto: !isNaN(+goto) ? +goto : goto[0].value
         };
       }
     }
