@@ -18,7 +18,7 @@ export default (code) => {
     const {results} = parser;
     const [result] = results;
 
-    const {states, timers} = result;
+    const {states} = result;
 
     // Require state numbers to be positive
     states.forEach(({state}) => {
@@ -36,5 +36,5 @@ export default (code) => {
         });
     });
 
-    return {states, timers};
+    return result;
 };
