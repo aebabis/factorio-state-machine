@@ -155,19 +155,17 @@ const getIntermediateFormOf = ({left, right, operator, out}, isSecondarySignal) 
 };
 
 // Helper function to generate next available numeric
-// let numericStateEnd;
-// function generateNextLabel(state, states) {
-//     if (!numericStateEnd) {
-//         numericStateEnd = endOfLastNumericState(states);
-//     }
-//
-//     const ends = state.statements.map(s => s.start + s.operations.length);
-//     return numericStateEnd
-// }
-
-//Placeholder function for now
+let numericStateEnd;
 function generateNextLabel(state, states) {
-    return endOfLastNumericState(states);
+    if (numericStateEnd === undefined) {
+        numericStateEnd = endOfLastNumericState(states);
+    }
+
+    const ends = state.statements.map(s => s.start + s.operations.length);
+    let end = getMaxRounded(ends);
+    let tmp = numericStateEnd;
+    numericStateEnd = numericStateEnd + end;
+    return tmp;
 }
 
 function getMaxRounded(ends) {
@@ -190,6 +188,7 @@ function endOfLastNumericState(states) {
  * into a blueprint
  */
 export default ({timers, states}) => {
+    numericStateEnd = undefined;
     // Map of string labels to numeric labels
     const labelMap = {};
 
@@ -259,11 +258,12 @@ export default ({timers, states}) => {
     });
 
     // Generate numeric labels for each label name
-    states.forEach(({state, statements}, index) => {
+    states.forEach((currentstate, index) => {
+        let {state, statements} = currentstate;
         // Generate numeric label if string
         if(typeof state === 'string') {
             if(!labelMap[state]) {
-                const start = generateNextLabel(state, states);
+                const start = generateNextLabel(currentstate, states);
                 labelMap[state] = start;
                 statements = statements.map((statement) => ({
                     ...statement,
