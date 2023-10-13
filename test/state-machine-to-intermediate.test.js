@@ -190,7 +190,7 @@ describe('state-machine-to-intermediate', () => {
                         out: 'INT_A'
                     }], [{
                         branch: 'INT_A',
-                        goto: 10
+                        goto: 9
                     }]]
                 }, {
                     start: 6,
@@ -202,9 +202,9 @@ describe('state-machine-to-intermediate', () => {
                     }]]
                 }]
             }, {
-                state: 10,
+                state: 9,
                 statements: [{
-                    start: 10,
+                    start: 9,
                     operations: [[{
                         guard: true
                     }], [{
@@ -214,7 +214,7 @@ describe('state-machine-to-intermediate', () => {
                         out: 'signal_Y'
                     }]]
                 }, {
-                    start: 12,
+                    start: 11,
                     operations: [[{
                         guard: true // TODO: Figure out the best way to share guards
                     }], [{
@@ -271,9 +271,9 @@ describe('state-machine-to-intermediate', () => {
         const expected = {
             timers: [],
             states: [{
-                state: 110,
+                state: 105,
                 statements: [{
-                    start: 110,
+                    start: 105,
                     operations: [[{
                         guard: true
                     }], [{
@@ -283,7 +283,7 @@ describe('state-machine-to-intermediate', () => {
                         out: 'signal_X'
                     }]]
                 }, {
-                    start: 112,
+                    start: 107,
                     operations: [[{
                         left: 'signal_X',
                         right: 3,
@@ -307,12 +307,12 @@ describe('state-machine-to-intermediate', () => {
                         goto: 100
                     }]]
                 }, {
-                    start: 116,
+                    start: 111,
                     operations: [[{
                         guard: true
                     }], [{
                         branch: 'GUARD',
-                        goto: 110
+                        goto: 105
                     }]]
                 }]
             }, {
@@ -333,7 +333,7 @@ describe('state-machine-to-intermediate', () => {
                         guard: true // TODO: Figure out the best way to share guards
                     }], [{
                         branch: 'GUARD',
-                        goto: 110
+                        goto: 105
                     }]]
                 }]
             }]
@@ -418,7 +418,7 @@ describe('state-machine-to-intermediate', () => {
                         out: 'INT_A'
                     }], [{
                         branch: 'INT_A',
-                        goto: 10
+                        goto: 9
                     }]]
                 }, {
                     start: 6,
@@ -430,9 +430,9 @@ describe('state-machine-to-intermediate', () => {
                     }]]
                 }]
             }, {
-                state: 10,
+                state: 9,
                 statements: [{
-                    start: 10,
+                    start: 9,
                     operations: [[{
                         guard: true
                     }], [{
@@ -442,7 +442,7 @@ describe('state-machine-to-intermediate', () => {
                         out: 'signal_Y'
                     }]]
                 }, {
-                    start: 12,
+                    start: 11,
                     operations: [[{
                         guard: true // TODO: Figure out the best way to share guards
                     }], [{

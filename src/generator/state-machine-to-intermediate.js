@@ -162,16 +162,10 @@ function generateNextLabel(state, states) {
     }
 
     const ends = state.statements.map(s => s.start + s.operations.length);
-    let end = getMaxRounded(ends);
+    let end = Math.max(0, Math.max(...ends) + 1);
     let tmp = numericStateEnd;
     numericStateEnd = numericStateEnd + end;
     return tmp;
-}
-
-function getMaxRounded(ends) {
-    let end = Math.max(...ends) + 1;
-    end = Math.max(end, 0); // prevent -infinity when ends is empty
-    return Math.ceil(end / 10) * 10; // Round to the nex multiple of 10
 }
 
 function endOfLastNumericState(states) {
@@ -179,7 +173,7 @@ function endOfLastNumericState(states) {
         .filter(({state}) => typeof state === 'number')
         .map(({statements}) => statements.map(s => s.start + s.operations.length))
         .flat();
-    return getMaxRounded(ends);
+    return Math.max(0, Math.max(...ends) + 1);
 }
 
 /**
